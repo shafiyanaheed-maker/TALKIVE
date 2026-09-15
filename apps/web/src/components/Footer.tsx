@@ -3,7 +3,7 @@ import { Video, ShieldCheck, Cpu, Globe } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="w-full border-t border-border bg-card/60 transition-colors">
+    <footer className="w-full border-t border-border/80 bg-card/60 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Column 1: Brand & Tagline */}
@@ -12,8 +12,8 @@ export function Footer() {
               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold">
                 <Video className="w-4 h-4" />
               </div>
-              <span className="text-lg font-black tracking-tight text-foreground font-mono">
-                TALKIVE<span className="text-primary">.in</span>
+              <span className="text-lg font-extrabold tracking-tight text-foreground font-mono">
+                TALKIVE
               </span>
             </div>
             <p className="text-xs uppercase font-bold tracking-widest text-primary">
@@ -81,7 +81,7 @@ export function Footer() {
 
         <div className="mt-12 pt-8 border-t border-border/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
           <p>
-            &copy; {new Date().getFullYear()} TALKIVE.IN. All rights reserved. Built as a production platform.
+            &copy; {new Date().getFullYear()} TALKIVE. All rights reserved. Built as a production platform.
           </p>
           <div className="flex items-center gap-6">
             <span>Production Grade</span>
