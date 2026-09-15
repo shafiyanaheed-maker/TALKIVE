@@ -3,47 +3,127 @@
 @tailwind utilities;
 
 @layer base {
+  /* LIGHT THEME (Clean, bright, premium, readable, subtle depth) */
   :root {
-    --background: 224 71% 4%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 7%;
-    --card-foreground: 210 40% 98%;
-    --primary: 142 71% 45%;
-    --primary-foreground: 144 100% 98%;
-    --secondary: 217 33% 17%;
+    --background: 210 40% 98%;         /* #f8fafc */
+    --foreground: 222 47% 11%;         /* #0f172a */
+    
+    --card: 0 0% 100%;                 /* #ffffff */
+    --card-foreground: 222 47% 11%;    /* #0f172a */
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    
+    --primary: 158 80% 36%;            /* #059669 - Rich emerald */
+    --primary-foreground: 0 0% 100%;   /* #ffffff */
+    
+    --secondary: 210 40% 96%;          /* #f1f5f9 */
+    --secondary-foreground: 222 47% 11%;
+    
+    --muted: 210 40% 96%;              /* #f1f5f9 */
+    --muted-foreground: 215 16% 47%;   /* #64748b */
+    
+    --accent: 152 76% 94%;             /* Emerald tint */
+    --accent-foreground: 160 84% 20%;  /* Dark emerald text */
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --success: 158 80% 36%;
+    --success-foreground: 0 0% 100%;
+    
+    --border: 214 32% 91%;             /* #e2e8f0 */
+    --input: 214 32% 91%;
+    --ring: 158 80% 36%;
+    
+    --radius: 0.75rem;
+
+    color-scheme: light;
+  }
+
+  /* DARK THEME (Futuristic, obsidian, sophisticated, high contrast, tech aesthetic) */
+  .dark {
+    --background: 224 71% 4%;          /* #070a13 - Obsidian */
+    --foreground: 210 40% 98%;         /* #f8fafc */
+    
+    --card: 222 47% 8%;                /* #0d1322 - Deep elevated slate */
+    --card-foreground: 210 40% 98%;    /* #f8fafc */
+    
+    --popover: 222 47% 8%;
+    --popover-foreground: 210 40% 98%;
+    
+    --primary: 158 75% 45%;            /* #10b981 - Glowing emerald */
+    --primary-foreground: 224 71% 4%;  /* #02120a */
+    
+    --secondary: 217 33% 13%;          /* #151c2c */
     --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 12%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 63% 31%;
+    
+    --muted: 217 33% 11%;              /* #121826 */
+    --muted-foreground: 215 20% 65%;   /* #94a3b8 */
+    
+    --accent: 160 60% 12%;             /* Subtle emerald glow */
+    --accent-foreground: 156 72% 67%;  /* Soft emerald text */
+    
+    --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 15%;
-    --input: 217 33% 15%;
-    --ring: 142 71% 45%;
-    --radius: 0.5rem;
+    
+    --success: 158 75% 45%;
+    --success-foreground: 224 71% 4%;
+    
+    --border: 217 33% 16%;             /* #1e293b */
+    --input: 217 33% 16%;
+    --ring: 158 75% 45%;
+
+    color-scheme: dark;
   }
 }
 
-body {
-  color: rgb(243 244 246);
-  background: #090d16;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  overflow-x: hidden;
+* {
+  border-color: hsl(var(--border));
 }
 
-/* Custom scrollbar for chat and code editor */
+body {
+  color: hsl(var(--foreground));
+  background-color: hsl(var(--background));
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow-x: hidden;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Subtle futuristic background mesh */
+.bg-tech-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, hsla(var(--foreground) / 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, hsla(var(--foreground) / 0.04) 1px, transparent 1px);
+}
+
+.dark .bg-radial-glow {
+  background: radial-gradient(circle 600px at 50% 200px, rgba(16, 185, 129, 0.08), transparent 80%);
+}
+
+.bg-radial-glow {
+  background: radial-gradient(circle 600px at 50% 200px, rgba(5, 150, 105, 0.05), transparent 80%);
+}
+
+/* Custom scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
-  background: #0d121f;
+  background: hsl(var(--background));
 }
 ::-webkit-scrollbar-thumb {
-  background: #1f293d;
-  border-radius: 3px;
+  background: hsl(var(--border));
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: hsl(var(--muted-foreground));
+}
+
+/* Accessible focus ring */
+:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
 }

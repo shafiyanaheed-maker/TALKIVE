@@ -1,276 +1,269 @@
-"use client";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { 
-  Video, 
-  Plus, 
-  Keyboard, 
-  Sparkles, 
-  GraduationCap, 
-  Briefcase, 
-  Code2, 
-  ShieldCheck, 
-  EyeOff, 
-  Languages, 
-  ArrowRight 
+import Link from "next/link";
+import {
+  Video,
+  Sparkles,
+  ArrowRight,
+  ShieldCheck,
+  Code2,
+  FileText,
+  Languages,
+  Sliders,
+  GraduationCap,
+  Briefcase,
+  Users2,
+  Lock,
+  Cpu,
+  Zap,
 } from "lucide-react";
-import { TalkiveApiClient } from "@/lib/api";
-import type { MeetingMode } from "@talkive/types";
+import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
+import { CapabilityCard } from "@/components/CapabilityCard";
 
 export default function HomePage() {
-  const router = useRouter();
-  const [roomCode, setRoomCode] = useState("");
-  const [meetingTitle, setMeetingTitle] = useState("");
-  const [selectedMode, setSelectedMode] = useState<MeetingMode>("general");
-  const [isCreating, setIsCreating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleCreateMeeting = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsCreating(true);
-    setError(null);
-
-    try {
-      const meeting = await TalkiveApiClient.createMeeting({
-        title: meetingTitle || "Quick Talkive Meeting",
-        mode: selectedMode,
-        accessType: "open",
-      });
-      router.push(`/room/${meeting.roomCode}`);
-    } catch (err: any) {
-      setError(err.message || "Failed to create meeting");
-      setIsCreating(false);
-    }
-  };
-
-  const handleJoinByCode = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!roomCode.trim()) return;
-    const cleanCode = roomCode.trim().toLowerCase();
-    router.push(`/room/${cleanCode}`);
-  };
+  const capabilities = [
+    {
+      icon: Video,
+      title: "HD Video & Audio",
+      badge: "WebRTC SFU",
+      description: "Crystal-clear, ultra-low latency audio and video streams powered by dynamic simulcast and dynacast bandwidth optimization.",
+    },
+    {
+      icon: Sparkles,
+      title: "AI Meeting Assistant",
+      badge: "Real-Time AI",
+      description: "Intelligent in-meeting copilot that provides context-aware prompts, automated action items, and live participant insights.",
+    },
+    {
+      icon: Users2,
+      title: "Real-Time Collaboration",
+      badge: "Zero Latency",
+      description: "Synchronized interactive whiteboards, instant file sharing, and high-frequency live reaction channels with CRDT consistency.",
+    },
+    {
+      icon: ShieldCheck,
+      title: "Secure Meetings",
+      badge: "Enterprise",
+      description: "DTLS-SRTP transport security, optional E2EE SFrame encryption, domain gating, and immutable supervisor audit trails.",
+    },
+    {
+      icon: Languages,
+      title: "Smart Captions & Translation",
+      badge: "Sub-300ms",
+      description: "Live multilingual transcription with speaker diarization and on-the-fly caption translation in over 30 languages.",
+    },
+    {
+      icon: Code2,
+      title: "Collaborative Coding",
+      badge: "Dual IDE",
+      description: "Side-by-side Monaco dual-code editor with pair programming synchronization, syntax highlighting, and sandboxed code execution.",
+    },
+    {
+      icon: FileText,
+      title: "AI Visual Notes",
+      badge: "Synthesis",
+      description: "Automatic post-meeting knowledge graphs, executive summaries, decision matrices, and Mermaid architectural diagrams.",
+    },
+    {
+      icon: Sliders,
+      title: "Adaptive Experience Engine",
+      badge: "Intelligent",
+      description: "The room interface dynamically adjusts tools, layouts, and permissions based on whether you are teaching, coding, or managing business.",
+    },
+    {
+      icon: GraduationCap,
+      title: "Education Mode",
+      badge: "Classroom",
+      description: "Teacher spotlighting, structured hand-raise queues, attention scores, pop quizzes, and secure assessment proctoring.",
+    },
+    {
+      icon: Briefcase,
+      title: "Business Mode",
+      badge: "Executive",
+      description: "Executive presentation stages, structured agendas, screen-share watermarks, and automated executive minutes of meeting.",
+    },
+  ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#080c14] text-slate-100">
-      {/* Top Navbar */}
-      <header className="border-b border-slate-800/80 bg-[#0c111d]/90 backdrop-blur sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <Video className="w-5 h-5 text-black stroke-[2.5]" />
-          </div>
-          <div>
-            <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
-              TALKIVE<span className="text-emerald-400">.IN</span>
-            </span>
-            <span className="hidden sm:inline-block ml-2 px-2 py-0.5 text-[10px] uppercase font-semibold tracking-wider rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-              Enterprise v1.0
-            </span>
-          </div>
-        </div>
+    <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors">
+      <Navbar />
 
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={() => router.push("/login")}
-            className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors"
-          >
-            Sign In
-          </button>
-          <a
-            href="#modes"
-            className="hidden sm:inline-block px-4 py-2 text-sm font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
-          >
-            Explore Modes
-          </a>
-        </div>
-      </header>
+      <main className="flex-1">
+        {/* HERO SECTION */}
+        <section className="relative overflow-hidden pt-16 pb-20 md:pt-24 md:pb-28 border-b border-border/60 bg-radial-glow">
+          <div className="absolute inset-0 bg-tech-grid pointer-events-none opacity-40 dark:opacity-25" />
 
-      {/* Hero Section */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 py-12 max-w-6xl mx-auto w-full">
-        <div className="text-center space-y-4 max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-800/50 text-emerald-400 text-xs font-medium">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Smart, Adaptive Real-Time Collaboration & Learning</span>
-          </div>
-          
-          <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight leading-tight">
-            Real-time meetings,{" "}
-            <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
-              engineered for intelligence.
-            </span>
-          </h1>
-
-          <p className="text-lg text-slate-400">
-            Ultra-low latency WebRTC meetings built for education, high-stakes assessments, paired software engineering, and AI-powered real-time transcription.
-          </p>
-        </div>
-
-        {/* Meeting Action Box */}
-        <div className="mt-10 w-full max-w-2xl bg-[#0f1626]/80 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur">
-          {error && (
-            <div className="mb-6 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-sm">
-              {error}
+          <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
+            {/* Top Identity Tag */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-accent/80 border border-border text-accent-foreground text-xs font-semibold tracking-wide mb-8 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <span className="font-mono uppercase tracking-wider">TALKIVE.IN</span>
+              <span className="text-muted-foreground">•</span>
+              <span>Next-Generation Virtual Platform</span>
             </div>
-          )}
 
-          <div className="grid sm:grid-cols-2 gap-6">
-            {/* Create Meeting */}
-            <form onSubmit={handleCreateMeeting} className="space-y-4 flex flex-col justify-between">
-              <div>
-                <h3 className="text-base font-semibold text-white flex items-center gap-2">
-                  <Plus className="w-4 h-4 text-emerald-400" /> Start New Meeting
-                </h3>
-                <p className="text-xs text-slate-400 mt-1">
-                  Create an instant or configured room
-                </p>
-              </div>
+            {/* Main Tagline */}
+            <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight leading-[1.08] max-w-4xl">
+              <span className="block text-foreground">CONNECT.</span>
+              <span className="block bg-gradient-to-r from-primary via-emerald-400 to-teal-500 bg-clip-text text-transparent">
+                COLLABORATE.
+              </span>
+              <span className="block text-foreground">COMMUNICATE.</span>
+            </h1>
 
-              <div className="space-y-3">
-                <input
-                  type="text"
-                  placeholder="Meeting Title (optional)"
-                  value={meetingTitle}
-                  onChange={(e) => setMeetingTitle(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-lg bg-slate-900 border border-slate-700/80 text-sm placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
-                />
+            {/* Supporting Statement */}
+            <p className="mt-8 text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto font-normal leading-relaxed">
+              Experience the future of virtual meetings with AI-powered collaboration tools.
+            </p>
 
-                <div className="space-y-1">
-                  <label className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
-                    Room Mode
-                  </label>
-                  <select
-                    value={selectedMode}
-                    onChange={(e) => setSelectedMode(e.target.value as MeetingMode)}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700/80 text-sm text-slate-200 focus:outline-none focus:border-emerald-500"
+            {/* Primary CTA */}
+            <div className="mt-10 flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+              <Link
+                href="/auth"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-base tracking-wide shadow-lg shadow-primary/25 hover:shadow-primary/35 transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <span>ENTER THE PLATFORM</span>
+                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </div>
+
+            {/* Subtle Platform Indicators */}
+            <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-xs text-muted-foreground font-medium">
+              <span className="flex items-center gap-1.5">
+                <Zap className="w-4 h-4 text-primary" /> Low Latency WebRTC
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Lock className="w-4 h-4 text-primary" /> Multi-Tenant Security
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Cpu className="w-4 h-4 text-primary" /> Adaptive Environments
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* CAPABILITY HIGHLIGHTS GRID */}
+        <section id="capabilities" className="py-20 md:py-28 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-xs uppercase font-extrabold tracking-widest text-primary mb-3">
+              Core Capabilities
+            </h2>
+            <p className="text-3xl sm:text-4xl font-black tracking-tight text-foreground">
+              Engineered For High-Stakes Collaboration
+            </p>
+            <p className="mt-4 text-base text-muted-foreground leading-relaxed">
+              Every tool within TALKIVE is purpose-built to eliminate friction between teachers, students, engineers, and executives.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {capabilities.map((cap) => (
+              <CapabilityCard
+                key={cap.title}
+                icon={cap.icon}
+                title={cap.title}
+                description={cap.description}
+                badge={cap.badge}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* SPECIALIZED MODES OVERVIEW */}
+        <section id="modes" className="py-20 bg-secondary/50 border-y border-border/80 transition-colors">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <h2 className="text-xs uppercase font-extrabold tracking-widest text-primary mb-3">
+                Tailored Workspaces
+              </h2>
+              <p className="text-3xl sm:text-4xl font-black tracking-tight text-foreground">
+                One Platform. Purpose-Built Environments.
+              </p>
+              <p className="mt-4 text-base text-muted-foreground leading-relaxed">
+                Choose the workspace that mirrors your workflow. TALKIVE reconfigures its video stage, sidebars, and permissions in real time.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+              {/* Education Card Preview */}
+              <div className="p-8 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-sm transition-all flex flex-col justify-between">
+                <div>
+                  <div className="w-12 h-12 rounded-2xl bg-accent text-accent-foreground flex items-center justify-center mb-6">
+                    <GraduationCap className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-card-foreground">
+                    Education & Virtual Classrooms
+                  </h3>
+                  <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                    Designed for interactive learning, mentorship, and high-integrity evaluations. Includes General Purpose interactive lectures and live Coding Bootcamps with paired editors.
+                  </p>
+                </div>
+                <div className="mt-8 pt-6 border-t border-border flex items-center justify-between">
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    General Purpose &bull; Coding Bootcamp
+                  </span>
+                  <Link
+                    href="/auth"
+                    className="inline-flex items-center gap-1 text-sm font-bold text-primary hover:underline"
                   >
-                    <option value="general">Standard Meeting</option>
-                    <option value="education">Education & Classroom</option>
-                    <option value="developer">Developer (Dual-Code Editor)</option>
-                    <option value="business">Business & Executive</option>
-                    <option value="assessment">Secure Assessment / Exam</option>
-                  </select>
+                    <span>Explore</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={isCreating}
-                className="w-full py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 transition disabled:opacity-50"
-              >
-                {isCreating ? "Creating Room..." : "Start Instant Room"}
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </form>
-
-            {/* Join with Code */}
-            <form onSubmit={handleJoinByCode} className="space-y-4 border-t sm:border-t-0 sm:border-l border-slate-800 pt-6 sm:pt-0 sm:pl-6 flex flex-col justify-between">
-              <div>
-                <h3 className="text-base font-semibold text-white flex items-center gap-2">
-                  <Keyboard className="w-4 h-4 text-teal-400" /> Join Existing Meeting
-                </h3>
-                <p className="text-xs text-slate-400 mt-1">
-                  Enter an invite code or link
-                </p>
+              {/* Business Card Preview */}
+              <div className="p-8 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-sm transition-all flex flex-col justify-between">
+                <div>
+                  <div className="w-12 h-12 rounded-2xl bg-accent text-accent-foreground flex items-center justify-center mb-6">
+                    <Briefcase className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-card-foreground">
+                    Business & Executive Meetings
+                  </h3>
+                  <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                    High-efficiency executive conferences with synchronized agendas, confidentiality watermarking, instant AI executive summaries, and action item tracking.
+                  </p>
+                </div>
+                <div className="mt-8 pt-6 border-t border-border flex items-center justify-between">
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    Executive Briefings &bull; Standups
+                  </span>
+                  <Link
+                    href="/auth"
+                    className="inline-flex items-center gap-1 text-sm font-bold text-primary hover:underline"
+                  >
+                    <span>Explore</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
               </div>
-
-              <div className="space-y-2">
-                <input
-                  type="text"
-                  placeholder="e.g. abc-defg-hij"
-                  value={roomCode}
-                  onChange={(e) => setRoomCode(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-lg bg-slate-900 border border-slate-700/80 text-sm placeholder-slate-500 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition font-mono"
-                />
-                <p className="text-[11px] text-slate-500">
-                  Format: 3 letters, hyphen, 4 letters, hyphen, 3 letters
-                </p>
-              </div>
-
-              <button
-                type="submit"
-                disabled={!roomCode.trim()}
-                className="w-full py-2.5 px-4 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 font-semibold text-sm flex items-center justify-center gap-2 border border-slate-700 transition disabled:opacity-40"
-              >
-                Join Room
-              </button>
-            </form>
+            </div>
           </div>
-        </div>
+        </section>
 
-        {/* Feature Highlights Grid */}
-        <section id="modes" className="mt-20 w-full">
-          <h2 className="text-2xl font-bold text-center tracking-tight mb-10">
-            Specialized Modes Built For Real Production Workflows
-          </h2>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="p-6 rounded-2xl bg-[#0e1422] border border-slate-800/80 hover:border-emerald-500/40 transition">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-4">
-                <GraduationCap className="w-5 h-5" />
-              </div>
-              <h3 className="text-lg font-bold text-white mb-2">Education Mode</h3>
-              <p className="text-sm text-slate-400 leading-relaxed">
-                Teacher spotlighting, ordered hand-raise queues, attention scores, synchronized whiteboard, and instant pop-quiz dispatches with grading analytics.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-[#0e1422] border border-slate-800/80 hover:border-emerald-500/40 transition">
-              <div className="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center mb-4">
-                <Code2 className="w-5 h-5" />
-              </div>
-              <h3 className="text-lg font-bold text-white mb-2">Dual-Code Editor</h3>
-              <p className="text-sm text-slate-400 leading-relaxed">
-                Side-by-side collaborative Monaco editors with Yjs CRDT real-time sync, syntax highlighting for 12+ languages, and isolated execution runners.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-[#0e1422] border border-slate-800/80 hover:border-emerald-500/40 transition">
-              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center mb-4">
-                <EyeOff className="w-5 h-5" />
-              </div>
-              <h3 className="text-lg font-bold text-white mb-2">Ghost Mode</h3>
-              <p className="text-sm text-slate-400 leading-relaxed">
-                Authorized supervisor observation with zero presence broadcast in participant rosters, read-only feeds, and cryptographically signed audit compliance.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-[#0e1422] border border-slate-800/80 hover:border-emerald-500/40 transition">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center mb-4">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-              <h3 className="text-lg font-bold text-white mb-2">Secure Proctoring</h3>
-              <p className="text-sm text-slate-400 leading-relaxed">
-                Kiosk full-screen enforcement, tab-switch telemetry, secondary monitor detection, and clipboard tamper prevention for verified exams.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-[#0e1422] border border-slate-800/80 hover:border-emerald-500/40 transition">
-              <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center mb-4">
-                <Languages className="w-5 h-5" />
-              </div>
-              <h3 className="text-lg font-bold text-white mb-2">AI Captions & Translation</h3>
-              <p className="text-sm text-slate-400 leading-relaxed">
-                Sub-300ms live speech-to-text with speaker diarization, real-time multilingual subtitles, and automated post-meeting visual mind maps.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-[#0e1422] border border-slate-800/80 hover:border-emerald-500/40 transition">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center mb-4">
-                <Briefcase className="w-5 h-5" />
-              </div>
-              <h3 className="text-lg font-bold text-white mb-2">Business Mode</h3>
-              <p className="text-sm text-slate-400 leading-relaxed">
-                Interactive agenda trackers, dynamic confidentiality watermarking on screen shares, and automated AI minutes of meeting distribution.
-              </p>
+        {/* BOTTOM CALL TO ACTION */}
+        <section className="py-20 md:py-28 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="p-8 sm:p-14 rounded-3xl bg-card border border-border shadow-md flex flex-col items-center">
+            <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-card-foreground">
+              Step Into The Next Generation of Meetings
+            </h2>
+            <p className="mt-4 text-base sm:text-lg text-muted-foreground max-w-xl">
+              Launch your session in seconds. Select your specialized environment and connect seamlessly across desktop, tablet, or mobile.
+            </p>
+            <div className="mt-8">
+              <Link
+                href="/auth"
+                className="inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-base shadow-lg shadow-primary/25 hover:shadow-primary/35 transition-all duration-200 group"
+              >
+                <span>ENTER THE PLATFORM</span>
+                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+              </Link>
             </div>
           </div>
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-800/80 bg-[#0a0f1a] py-6 px-6 text-center text-xs text-slate-500">
-        Talkive.in &copy; {new Date().getFullYear()} - Production Real-Time Media Platform. Engineered with Next.js 15, Fastify, LiveKit SFU, and PostgreSQL.
-      </footer>
+      <Footer />
     </div>
   );
 }
