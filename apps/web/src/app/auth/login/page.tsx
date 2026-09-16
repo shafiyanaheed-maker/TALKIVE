@@ -7,9 +7,9 @@ import {
   EyeOff,
   Lock,
   Mail,
-  User,
 } from "lucide-react";
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 
 function GoogleIcon() {
   return (
@@ -22,14 +22,17 @@ function GoogleIcon() {
         fill="#4285F4"
         d="M21.35 12.27c0-.72-.06-1.42-.18-2.09H12v3.96h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.69 2.91-4.18 2.91-7.26Z"
       />
+
       <path
         fill="#34A853"
         d="M12 21.72c2.63 0 4.84-.87 6.45-2.36l-3.14-2.45c-.87.58-1.98.92-3.31.92-2.54 0-4.69-1.72-5.46-4.03H3.3v2.53A9.74 9.74 0 0 0 12 21.72Z"
       />
+
       <path
         fill="#FBBC05"
-        d="M6.54 13.8a5.85 5.85 0 0 1 0-3.6V7.67H3.3a9.75 9.75 0 0 0 0 8.66l3.24-2.53Z"
+        d="M6.54 13.8a5.85 5.85 0 0 1 0-3.6V7.67H3.3a9.75 9.75 0 0 0 0 8.66l3.24-2.53c.77-2.31 2.92-4.03 5.46-4.03Z"
       />
+
       <path
         fill="#EA4335"
         d="M12 6.17c1.43 0 2.71.49 3.72 1.46l2.79-2.79C16.84 3.27 14.63 2.28 12 2.28a9.74 9.74 0 0 0-8.7 5.39l3.24 2.53c.77-2.31 2.92-4.03 5.46-4.03Z"
@@ -38,12 +41,22 @@ function GoogleIcon() {
   );
 }
 
-export default function SignupPage() {
+export default function LoginPage() {
+  const router = useRouter();
+
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (!email.trim() || !password.trim()) {
+      return;
+    }
+
+    router.push("/experience");
   };
 
   return (
@@ -67,7 +80,10 @@ export default function SignupPage() {
           </span>
         </Link>
 
-        <Link href="/" className="auth-back-link">
+        <Link
+          href="/"
+          className="auth-back-link"
+        >
           Back to home
         </Link>
       </header>
@@ -76,7 +92,7 @@ export default function SignupPage() {
         <div className="auth-intro hidden lg:block">
           <div className="auth-welcome-badge">
             <span />
-            JOIN TALKIVE
+            WELCOME BACK TO TALKIVE
           </div>
 
           <h1 className="auth-heading">
@@ -86,19 +102,25 @@ export default function SignupPage() {
           </h1>
 
           <p className="auth-description">
-            Create your TALKIVE account and enter an intelligent
-            real-time environment built for connecting,
-            collaborating, learning, and communicating.
+            Sign in to your TALKIVE account and continue connecting,
+            collaborating, learning, and communicating in one intelligent
+            real-time environment.
           </p>
 
           <div className="mt-8 space-y-4">
             {[
               "Connect with people in real time",
               "Collaborate in intelligent digital spaces",
-              "Access powerful meeting tools",
+              "Continue where you left off",
             ].map((item) => (
-              <div key={item} className="auth-benefit">
-                <span className="auth-check">✓</span>
+              <div
+                key={item}
+                className="auth-benefit"
+              >
+                <span className="auth-check">
+                  ✓
+                </span>
+
                 <span>{item}</span>
               </div>
             ))}
@@ -107,36 +129,30 @@ export default function SignupPage() {
 
         <div className="auth-card">
           <div className="mb-7">
-            <h1 className="auth-card-title">Create your account</h1>
+            <div className="auth-welcome-badge mb-4">
+              <span />
+              SIGN IN
+            </div>
+
+            <h1 className="auth-card-title">
+              Welcome back
+            </h1>
 
             <p className="auth-card-subtitle">
-              Start your TALKIVE experience.
+              Sign in to continue to your TALKIVE workspace.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-5"
+          >
+            {/* Email */}
             <div>
-              <label htmlFor="fullName" className="auth-label">
-                Full name
-              </label>
-
-              <div className="auth-input-wrapper">
-                <User className="auth-input-icon" />
-
-                <input
-                  id="fullName"
-                  name="fullName"
-                  type="text"
-                  placeholder="Your full name"
-                  className="auth-input"
-                  autoComplete="name"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="email" className="auth-label">
+              <label
+                htmlFor="email"
+                className="auth-label"
+              >
                 Email address
               </label>
 
@@ -147,6 +163,10 @@ export default function SignupPage() {
                   id="email"
                   name="email"
                   type="email"
+                  value={email}
+                  onChange={(event) =>
+                    setEmail(event.target.value)
+                  }
                   placeholder="you@example.com"
                   className="auth-input"
                   autoComplete="email"
@@ -155,10 +175,23 @@ export default function SignupPage() {
               </div>
             </div>
 
+            {/* Password */}
             <div>
-              <label htmlFor="password" className="auth-label">
-                Password
-              </label>
+              <div className="mb-2 flex items-center justify-between">
+                <label
+                  htmlFor="password"
+                  className="auth-label mb-0"
+                >
+                  Password
+                </label>
+
+                <Link
+                  href="/auth/login/forgot-password"
+                  className="auth-forgot-link"
+                >
+                  Forgot password?
+                </Link>
+              </div>
 
               <div className="auth-input-wrapper">
                 <Lock className="auth-input-icon" />
@@ -166,20 +199,33 @@ export default function SignupPage() {
                 <input
                   id="password"
                   name="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Create a password"
+                  type={
+                    showPassword
+                      ? "text"
+                      : "password"
+                  }
+                  value={password}
+                  onChange={(event) =>
+                    setPassword(event.target.value)
+                  }
+                  placeholder="Enter your password"
                   className="auth-input pr-10"
-                  autoComplete="new-password"
-                  minLength={8}
+                  autoComplete="current-password"
                   required
                 />
 
                 <button
                   type="button"
-                  onClick={() => setShowPassword((value) => !value)}
+                  onClick={() =>
+                    setShowPassword(
+                      (value) => !value
+                    )
+                  }
                   className="auth-password-toggle"
                   aria-label={
-                    showPassword ? "Hide password" : "Show password"
+                    showPassword
+                      ? "Hide password"
+                      : "Show password"
                   }
                 >
                   {showPassword ? (
@@ -191,85 +237,20 @@ export default function SignupPage() {
               </div>
             </div>
 
-            <div>
-              <label
-                htmlFor="confirmPassword"
-                className="auth-label"
-              >
-                Confirm password
-              </label>
+            {/* Sign In */}
+            <button
+              type="submit"
+              className="auth-submit"
+            >
+              Sign In
 
-              <div className="auth-input-wrapper">
-                <Lock className="auth-input-icon" />
-
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type={
-                    showConfirmPassword ? "text" : "password"
-                  }
-                  placeholder="Confirm your password"
-                  className="auth-input pr-10"
-                  autoComplete="new-password"
-                  minLength={8}
-                  required
-                />
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setShowConfirmPassword((value) => !value)
-                  }
-                  className="auth-password-toggle"
-                  aria-label={
-                    showConfirmPassword
-                      ? "Hide password"
-                      : "Show password"
-                  }
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <label className="flex cursor-pointer items-start gap-3 pt-1">
-              <input
-                type="checkbox"
-                className="mt-1 h-4 w-4 cursor-pointer accent-emerald-500"
-                required
-              />
-
-              <span className="text-xs leading-5 text-muted-foreground">
-                I agree to the{" "}
-                <Link
-                  href="/terms"
-                  className="font-semibold text-primary hover:underline"
-                >
-                  Terms of Service
-                </Link>{" "}
-                and{" "}
-                <Link
-                  href="/privacy"
-                  className="font-semibold text-primary hover:underline"
-                >
-                  Privacy Policy
-                </Link>
-                .
-              </span>
-            </label>
-
-            <button type="submit" className="auth-submit">
-              Sign Up
               <ArrowRight
                 className="h-4 w-4"
                 strokeWidth={2.5}
               />
             </button>
 
+            {/* Divider */}
             <div className="flex items-center gap-4">
               <div className="h-px flex-1 bg-border" />
 
@@ -280,22 +261,29 @@ export default function SignupPage() {
               <div className="h-px flex-1 bg-border" />
             </div>
 
+            {/* Google */}
             <button
               type="button"
               className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-border bg-background font-semibold text-foreground transition-all hover:border-primary/40 hover:bg-primary/[0.04]"
             >
               <GoogleIcon />
+
               Continue with Google
             </button>
           </form>
 
           <div className="auth-divider" />
 
+          {/* Sign Up */}
           <div className="text-center">
             <p className="auth-account-text">
-              Already have an account?{" "}
-              <Link href="/auth/login" className="auth-link">
-                Sign in
+              Don&apos;t have an account?{" "}
+
+              <Link
+                href="/auth"
+                className="auth-link"
+              >
+                Create new account
               </Link>
             </p>
           </div>
