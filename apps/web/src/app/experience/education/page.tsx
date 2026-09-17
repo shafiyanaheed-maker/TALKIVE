@@ -166,7 +166,7 @@ export default function EducationExperiencePage() {
                   We will connect it to the actual meeting flow later.
               */}
               <Link
-                href="/room/general"
+                href="/dashboard"
                 className="mt-9 inline-flex items-center gap-2 text-sm font-bold text-primary"
               >
                 Continue with General
@@ -225,7 +225,7 @@ export default function EducationExperiencePage() {
               </div>
 
               <Link
-                href="/room/coding"
+                href="/dashboard/coding"
                 className="mt-9 inline-flex items-center gap-2 text-sm font-bold text-primary"
               >
                 Continue with Coding Bootcamp

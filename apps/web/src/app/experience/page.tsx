@@ -180,7 +180,7 @@ export default function ExperiencePage() {
 
           {/* BUSINESS */}
           <Link
-            href="/experience/business"
+            href="/dashboard/business"
             className="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-[0_20px_70px_hsl(var(--primary)/0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/35 hover:shadow-[0_28px_90px_hsl(var(--primary)/0.10)] sm:p-10"
           >
             <div className="pointer-events-none absolute -right-32 -top-32 h-72 w-72 rounded-full bg-primary/[0.07] blur-3xl" />
