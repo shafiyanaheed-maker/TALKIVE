@@ -2,8 +2,11 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Talkive - Smart Adaptive Real-Time Meetings",
-  description: "Production-grade real-time video meetings for education, business, paired engineering, and AI-assisted learning.",
+  title: "TALKIVE - Connect. Collaborate. Communicate.",
+  description: "Experience the future of virtual meetings with AI-powered collaboration tools. Smart real-time video, dual-code editor, intelligent whiteboard, and adaptive environments.",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
@@ -12,8 +15,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className="antialiased min-h-screen bg-[#090d16] text-slate-100 selection:bg-emerald-500 selection:text-black">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Anti-FOUC theme initialization script */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var saved = localStorage.getItem('talkive-theme');
+                  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  if (saved === 'dark' || (!saved && prefersDark)) {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
+      <body className="min-h-screen bg-background text-foreground antialiased selection:bg-primary selection:text-primary-foreground">
         {children}
       </body>
     </html>
