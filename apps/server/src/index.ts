@@ -1,29 +1,78 @@
-import { buildServer } from "./server.js";
-import { env } from "./config/env.js";
+import Fastify from "fastify";
+import { meetingRoutes } from "./routes/meetings";
 
-async function main() {
-  const server = await buildServer();
+const app = Fastify({
+  logger: true,
+});
 
+/*
+ * Basic CORS configuration.
+ *
+ * Frontend:
+ * http://localhost:3000
+ *
+ * Backend:
+ * http://localhost:4000
+ */
+app.addHook("onRequest", async (request, reply) => {
+  reply.header(
+    "Access-Control-Allow-Origin",
+    "http://localhost:3000"
+  );
+
+  reply.header(
+    "Access-Control-Allow-Methods",
+    "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+  );
+
+  reply.header(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
+
+  if (request.method === "OPTIONS") {
+    reply.status(204).send();
+    return;
+  }
+});
+
+/*
+ * Health check
+ */
+app.get("/health", async () => {
+  return {
+    status: "healthy",
+    service: "talkive-server",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  };
+});
+
+/*
+ * Meeting routes
+ */
+app.register(meetingRoutes);
+
+/*
+ * Start server
+ */
+const port = Number(process.env.PORT) || 4000;
+const host = process.env.HOST || "0.0.0.0";
+
+const start = async (): Promise<void> => {
   try {
-    const address = await server.listen({
-      port: env.PORT,
-      host: env.HOST,
+    await app.listen({
+      port,
+      host,
     });
-    console.log(`🚀 Talkive Server running on ${address}`);
-    console.log(`📡 WebSocket Signaling available at ws://${env.HOST}:${env.PORT}/ws/signaling`);
-  } catch (err) {
-    server.log.error(err);
+
+    console.log(
+      `TALKIVE server running on http://localhost:${port}`
+    );
+  } catch (error) {
+    app.log.error(error);
     process.exit(1);
   }
+};
 
-  const signals = ["SIGINT", "SIGTERM"];
-  for (const signal of signals) {
-    process.on(signal, async () => {
-      console.log(`\nReceived ${signal}, gracefully shutting down Talkive server...`);
-      await server.close();
-      process.exit(0);
-    });
-  }
-}
-
-main();
+void start();
