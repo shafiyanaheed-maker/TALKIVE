@@ -1,86 +1,189 @@
-export type Experience = "general" | "coding" | "business";
+import {
+  BookOpen,
+  Briefcase,
+  Code2,
+  FileText,
+  GraduationCap,
+  LayoutDashboard,
+  MessageSquare,
+  Settings,
+  Users,
+  Video,
+} from "lucide-react";
 
-export const experienceInfo = {
-  general: {
-    title: "General",
-    description: "Connect, collaborate and communicate.",
-  },
-  coding: {
-    title: "Coding Bootcamp",
-    description: "Learn, code and build together.",
-  },
-  business: {
-    title: "Business",
-    description: "Meet, collaborate and grow your team.",
-  },
-} as const;
+export type DashboardStat = {
+  label: string;
+  value: string;
+  description: string;
+};
 
-export const generalMeetings = [
+export type QuickAction = {
+  title: string;
+  description: string;
+  icon: typeof Video;
+  action: string;
+};
+
+export type RecentMeeting = {
+  id: string;
+  title: string;
+  type: string;
+  date: string;
+  time: string;
+  participants: number;
+  status: string;
+};
+
+export const dashboardStats: DashboardStat[] = [
   {
-    title: "Team Standup",
-    date: "Oct 11, 2025",
-    time: "10:00 AM",
-    participants: "8 participants",
-    status: "Scheduled",
+    label: "Total Meetings",
+    value: "0",
+    description: "No meetings yet",
   },
   {
-    title: "Product Design Review",
-    date: "Oct 10, 2025",
-    time: "2:30 PM",
-    participants: "12 participants",
-    status: "Ended",
+    label: "Participants",
+    value: "0",
+    description: "No participants yet",
   },
   {
-    title: "Client Presentation",
-    date: "Oct 9, 2025",
-    time: "11:00 AM",
-    participants: "6 participants",
-    status: "Ended",
+    label: "Hours",
+    value: "0h",
+    description: "Meeting time",
   },
   {
-    title: "Development Sprint Planning",
-    date: "Oct 8, 2025",
-    time: "9:00 AM",
-    participants: "10 participants",
-    status: "Scheduled",
+    label: "Notes",
+    value: "0",
+    description: "No notes yet",
   },
 ];
 
-export const codingCourses = [
+export const quickActions: QuickAction[] = [
   {
-    title: "JavaScript Fundamentals",
-    progress: 82,
-    lessons: "8 / 10 lessons",
+    title: "Start Meeting",
+    description: "Create a new meeting room",
+    icon: Video,
+    action: "start",
   },
   {
-    title: "React & Next.js",
-    progress: 64,
-    lessons: "6 / 10 lessons",
+    title: "Join Meeting",
+    description: "Enter an existing meeting",
+    icon: Users,
+    action: "join",
   },
   {
-    title: "Full Stack Development",
-    progress: 38,
-    lessons: "4 / 10 lessons",
+    title: "Create Notes",
+    description: "Start a new workspace",
+    icon: FileText,
+    action: "notes",
   },
 ];
 
-export const businessMeetings = [
+export const recentMeetings: RecentMeeting[] = [];
+
+export const dashboardNavigation = [
   {
-    title: "Product Strategy",
-    time: "10:00 AM",
-    participants: "8 participants",
-    type: "Internal",
+    label: "Dashboard",
+    icon: LayoutDashboard,
   },
   {
-    title: "Team Standup",
-    time: "11:30 AM",
-    participants: "12 participants",
-    type: "Team",
+    label: "Meetings",
+    icon: Video,
   },
   {
-    title: "Client Presentation",
-    time: "2:00 PM",
-    participants: "6 participants",
-    type: "Client",
+    label: "Schedule",
+    icon: BookOpen,
+  },
+  {
+    label: "Recordings",
+    icon: FileText,
+  },
+  {
+    label: "Notes",
+    icon: MessageSquare,
+  },
+  {
+    label: "Settings",
+    icon: Settings,
+  },
+];
+
+export const educationNavigation = [
+  {
+    label: "Dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    label: "Classes",
+    icon: GraduationCap,
+  },
+  {
+    label: "Students",
+    icon: Users,
+  },
+  {
+    label: "Meetings",
+    icon: Video,
+  },
+  {
+    label: "Notes",
+    icon: FileText,
+  },
+  {
+    label: "Settings",
+    icon: Settings,
+  },
+];
+
+export const codingNavigation = [
+  {
+    label: "Dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    label: "Coding Rooms",
+    icon: Code2,
+  },
+  {
+    label: "Students",
+    icon: Users,
+  },
+  {
+    label: "Meetings",
+    icon: Video,
+  },
+  {
+    label: "Projects",
+    icon: FileText,
+  },
+  {
+    label: "Settings",
+    icon: Settings,
+  },
+];
+
+export const businessNavigation = [
+  {
+    label: "Dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    label: "Meetings",
+    icon: Video,
+  },
+  {
+    label: "Schedule",
+    icon: BookOpen,
+  },
+  {
+    label: "Team",
+    icon: Users,
+  },
+  {
+    label: "Notes",
+    icon: FileText,
+  },
+  {
+    label: "Settings",
+    icon: Settings,
   },
 ];
