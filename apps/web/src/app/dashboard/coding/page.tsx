@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import DashboardShell from "../../../components/dashboard/dashboard-shell";
 
 type RoomStatus = "Live" | "Scheduled" | "Completed";
@@ -83,6 +84,8 @@ const quickActions = [
 ];
 
 export default function CodingDashboardPage() {
+  const router = useRouter();
+
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<
     "All Rooms" | RoomStatus
@@ -176,6 +179,7 @@ export default function CodingDashboardPage() {
             <span className="dashboard-stat-label">
               CODE ROOMS
             </span>
+
             <strong>{codingRooms.length}</strong>
           </div>
         </div>
@@ -189,6 +193,7 @@ export default function CodingDashboardPage() {
             <span className="dashboard-stat-label">
               LIVE ROOMS
             </span>
+
             <strong>{liveCount}</strong>
           </div>
         </div>
@@ -202,6 +207,7 @@ export default function CodingDashboardPage() {
             <span className="dashboard-stat-label">
               SCHEDULED
             </span>
+
             <strong>{scheduledCount}</strong>
           </div>
         </div>
@@ -215,6 +221,7 @@ export default function CodingDashboardPage() {
             <span className="dashboard-stat-label">
               COMPLETED
             </span>
+
             <strong>{completedCount}</strong>
           </div>
         </div>
@@ -239,6 +246,11 @@ export default function CodingDashboardPage() {
               type="button"
               className={`dashboard-action coding-action ${action.className}`}
               key={action.title}
+              onClick={() => {
+                if (action.title === "Start Coding") {
+                  router.push("/meeting/create");
+                }
+              }}
             >
               <span className="action-icon coding-action-icon">
                 {action.icon}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -101,6 +102,8 @@ const quickActions = [
 ];
 
 export default function BusinessDashboardPage() {
+  const router = useRouter();
+
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<
     "All Meetings" | "Live" | "Scheduled" | "Completed"
@@ -162,7 +165,11 @@ export default function BusinessDashboardPage() {
             </div>
           </div>
 
-          <button className="business-primary-button">
+          <button
+            type="button"
+            className="business-primary-button"
+            onClick={() => router.push("/meeting/create")}
+          >
             <Plus size={18} />
             Start Meeting
           </button>
@@ -233,9 +240,15 @@ export default function BusinessDashboardPage() {
               return (
                 <button
                   key={action.title}
+                  type="button"
                   className={`business-action-card ${
                     action.primary ? "primary" : ""
                   }`}
+                  onClick={() => {
+                    if (action.title === "Start Meeting") {
+                      router.push("/meeting/create");
+                    }
+                  }}
                 >
                   <div className="business-action-icon">
                     <Icon size={21} strokeWidth={1.8} />
@@ -266,7 +279,10 @@ export default function BusinessDashboardPage() {
               </p>
             </div>
 
-            <button className="business-view-button">
+            <button
+              type="button"
+              className="business-view-button"
+            >
               View all
               <ArrowRight size={15} />
             </button>
@@ -353,6 +369,7 @@ export default function BusinessDashboardPage() {
                   </div>
 
                   <button
+                    type="button"
                     className="business-row-arrow"
                     aria-label="Open meeting"
                   >
@@ -387,7 +404,7 @@ export default function BusinessDashboardPage() {
               </p>
             </div>
 
-            <button>
+            <button type="button">
               Explore
               <ArrowRight size={15} />
             </button>
@@ -406,7 +423,7 @@ export default function BusinessDashboardPage() {
               </p>
             </div>
 
-            <button>
+            <button type="button">
               Open Notes
               <ArrowRight size={15} />
             </button>
