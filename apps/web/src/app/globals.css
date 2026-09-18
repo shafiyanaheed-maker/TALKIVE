@@ -4229,3 +4229,868 @@ html[data-theme="dark"] .business-empty-icon {
     gap: 5px;
   }
 }
+/* =========================================================
+   TALKIVE CODING BOOTCAMP MEETING
+========================================================= */
+
+.meeting-screen {
+  width: 100%;
+  height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  background: #f1fbf6;
+
+  color: #10211a;
+}
+
+/* =========================================================
+   TOP BAR
+========================================================= */
+
+.meeting-topbar {
+  height: 66px;
+  min-height: 66px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 16px;
+
+  background: #ffffff;
+
+  border-bottom: 1px solid #cfe9dc;
+}
+
+.meeting-brand {
+  font-size: 20px;
+  font-weight: 500;
+
+  letter-spacing: 1px;
+
+  color: #006d51;
+}
+
+.meeting-brand span {
+  color: #006d51;
+}
+
+.meeting-time {
+  margin-left: 18px;
+
+  color: #53625c;
+
+  font-size: 14px;
+
+  font-variant-numeric: tabular-nums;
+}
+
+.meeting-top-actions {
+  margin-left: auto;
+
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+}
+
+.top-action {
+  width: 48px;
+  height: 38px;
+
+  border: none;
+  border-radius: 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #dcf8e9;
+
+  color: #008b50;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.top-action:hover {
+  transform: translateY(-1px);
+}
+
+.top-action svg {
+  width: 21px;
+  height: 21px;
+
+  fill: none;
+
+  stroke: currentColor;
+
+  stroke-width: 1.8;
+
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.top-action-active {
+  background: #009d4f;
+  color: #ffffff;
+}
+
+/* =========================================================
+   MAIN BODY
+========================================================= */
+
+.meeting-body {
+  flex: 1;
+
+  min-height: 0;
+
+  display: flex;
+
+  overflow: hidden;
+}
+
+/* =========================================================
+   VIDEO AREA
+========================================================= */
+
+.video-side {
+  flex: 1;
+
+  min-width: 0;
+
+  padding: 16px;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+}
+
+.main-video {
+  flex: 1;
+
+  min-height: 0;
+
+  position: relative;
+
+  border-radius: 17px;
+
+  background: #101928;
+
+  overflow: hidden;
+}
+
+.main-participant-name {
+  position: absolute;
+
+  left: 18px;
+  bottom: 18px;
+
+  padding: 8px 13px;
+
+  border-radius: 18px;
+
+  background: #060c14;
+
+  color: #ffffff;
+
+  font-size: 13px;
+
+  line-height: 1;
+}
+
+/* =========================================================
+   PARTICIPANTS
+========================================================= */
+
+.participants {
+  height: 178px;
+  min-height: 178px;
+
+  margin-top: 16px;
+
+  display: flex;
+
+  gap: 8px;
+
+  overflow-x: auto;
+}
+
+.participant-card {
+  position: relative;
+
+  flex: 0 0 25%;
+
+  min-width: 180px;
+
+  height: 100%;
+
+  border-radius: 17px;
+
+  overflow: hidden;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.participant-gradient {
+  background:
+    linear-gradient(
+      135deg,
+      #28d178 0%,
+      #2e8de5 100%
+    );
+}
+
+.participant-empty {
+  background: #e4e7eb;
+}
+
+.participant-avatar {
+  width: 51px;
+  height: 51px;
+
+  border-radius: 50%;
+
+  background: #d2d8e0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.participant-avatar svg {
+  width: 29px;
+  height: 29px;
+
+  fill: none;
+
+  stroke: #263442;
+
+  stroke-width: 1.5;
+}
+
+.participant-label {
+  position: absolute;
+
+  left: 9px;
+  bottom: 8px;
+
+  padding: 5px 8px;
+
+  border-radius: 4px;
+
+  background: rgba(255, 255, 255, 0.92);
+
+  color: #16342a;
+
+  font-size: 12px;
+}
+
+.participant-muted {
+  position: absolute;
+
+  right: 9px;
+  top: 9px;
+
+  width: 23px;
+  height: 23px;
+
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #ff414b;
+
+  color: #ffffff;
+}
+
+.participant-muted svg {
+  width: 13px;
+  height: 13px;
+
+  fill: none;
+
+  stroke: currentColor;
+
+  stroke-width: 1.8;
+
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* =========================================================
+   CODE EDITOR
+========================================================= */
+
+.coding-editor {
+  width: 410px;
+  min-width: 410px;
+
+  height: 100%;
+
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+
+  background: #ffffff;
+
+  border-left: 1px solid #c5ead6;
+
+  overflow: hidden;
+}
+
+/* =========================================================
+   EDITOR HEADER
+========================================================= */
+
+.editor-heading {
+  height: 56px;
+  min-height: 56px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 13px;
+
+  border-bottom: 1px solid #dce8e2;
+}
+
+.editor-heading h2 {
+  margin: 0;
+
+  color: #006d51;
+
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.editor-close {
+  margin-left: auto;
+
+  width: 34px;
+  height: 34px;
+
+  border: none;
+
+  background: transparent;
+
+  color: #14221d;
+
+  font-size: 27px;
+
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+/* =========================================================
+   LANGUAGE SELECT
+========================================================= */
+
+.editor-language {
+  position: relative;
+
+  padding: 13px 13px 8px;
+}
+
+.editor-language select {
+  width: 100%;
+  height: 39px;
+
+  padding: 0 39px 0 14px;
+
+  appearance: none;
+
+  border: 1px solid #d4ded9;
+
+  border-radius: 20px;
+
+  outline: none;
+
+  background: #ffffff;
+
+  color: #243b34;
+
+  font-size: 14px;
+
+  cursor: pointer;
+}
+
+.editor-language select:focus {
+  border-color: #72bf9c;
+}
+
+.select-arrow {
+  position: absolute;
+
+  right: 27px;
+  top: 23px;
+
+  pointer-events: none;
+
+  color: #8b9a94;
+
+  font-size: 18px;
+}
+
+/* =========================================================
+   EDITOR BUTTONS
+========================================================= */
+
+.editor-buttons {
+  display: flex;
+
+  gap: 8px;
+
+  padding: 0 13px 13px;
+
+  border-bottom: 1px solid #dfe6e2;
+}
+
+.editor-buttons button {
+  height: 36px;
+
+  flex: 1;
+
+  border-radius: 20px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+}
+
+.editor-run {
+  border: 1px solid #00a650;
+
+  background: #00a650;
+
+  color: #ffffff;
+}
+
+.editor-secondary {
+  border: 1px solid #e1e8e4;
+
+  background: #ffffff;
+
+  color: #17241f;
+}
+
+.editor-run:hover {
+  background: #008f46;
+}
+
+.editor-secondary:hover {
+  background: #f5faf7;
+}
+
+/* =========================================================
+   CODE AREA
+========================================================= */
+
+.editor-code-wrapper {
+  flex: 1;
+
+  min-height: 0;
+
+  padding: 13px;
+}
+
+.editor-code {
+  width: 100%;
+  height: 100%;
+
+  resize: none;
+
+  display: block;
+
+  padding: 14px;
+
+  border: 1px solid #d4ded9;
+
+  border-radius: 17px;
+
+  outline: none;
+
+  background: #ffffff;
+
+  color: #101b2a;
+
+  font-family:
+    Consolas,
+    "Courier New",
+    monospace;
+
+  font-size: 14px;
+
+  line-height: 1.55;
+
+  tab-size: 2;
+}
+
+.editor-code:focus {
+  border-color: #65b996;
+}
+
+/* =========================================================
+   COMPILER OUTPUT
+========================================================= */
+
+.compiler-output {
+  position: absolute;
+
+  left: 13px;
+  right: 13px;
+  bottom: 88px;
+
+  max-height: 180px;
+
+  overflow: auto;
+
+  border-radius: 12px;
+
+  background: #101928;
+
+  color: #ffffff;
+
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.22);
+
+  z-index: 5;
+}
+
+.compiler-output-title {
+  padding: 9px 12px;
+
+  background: #172133;
+
+  font-size: 13px;
+
+  font-weight: 700;
+}
+
+.compiler-output pre {
+  margin: 0;
+
+  padding: 12px;
+
+  white-space: pre-wrap;
+
+  font-family:
+    Consolas,
+    "Courier New",
+    monospace;
+
+  font-size: 12px;
+}
+
+/* =========================================================
+   AI BUTTON
+========================================================= */
+
+.editor-ai-button {
+  position: absolute;
+
+  right: 17px;
+  bottom: 21px;
+
+  width: 59px;
+  height: 59px;
+
+  border: none;
+
+  border-radius: 50%;
+
+  background: #009d4f;
+
+  color: #ffffff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 23px;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 5px 17px rgba(0, 0, 0, 0.18);
+
+  z-index: 10;
+}
+
+.editor-ai-button i {
+  position: absolute;
+
+  right: -1px;
+  top: -1px;
+
+  width: 19px;
+  height: 19px;
+
+  border-radius: 50%;
+
+  background: #ff3543;
+}
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.meeting-footer {
+  height: 82px;
+  min-height: 82px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 16px;
+
+  background: #ffffff;
+
+  border-top: 1px solid #d2e9dc;
+}
+
+.footer-left,
+.footer-center,
+.footer-right {
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+}
+
+.footer-center {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.footer-right {
+  margin-left: auto;
+}
+
+/* =========================================================
+   GREEN BUTTONS
+========================================================= */
+
+.footer-green {
+  width: 46px;
+  height: 44px;
+
+  border: none;
+
+  border-radius: 14px;
+
+  background: #008f4a;
+
+  color: #ffffff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+}
+
+.footer-green svg {
+  width: 20px;
+  height: 20px;
+
+  fill: none;
+
+  stroke: currentColor;
+
+  stroke-width: 1.7;
+
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.footer-green.control-off {
+  background: #69736f;
+}
+
+/* =========================================================
+   LARGE CONTROLS
+========================================================= */
+
+.footer-large {
+  height: 44px;
+
+  padding: 0 22px;
+
+  border: 1px solid #dfe7e3;
+
+  border-radius: 14px;
+
+  background: #ffffff;
+
+  color: #18251f;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 9px;
+
+  font-size: 14px;
+
+  cursor: pointer;
+}
+
+.footer-large svg {
+  width: 17px;
+  height: 17px;
+
+  fill: none;
+
+  stroke: currentColor;
+
+  stroke-width: 1.6;
+
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.footer-small {
+  width: 52px;
+  height: 44px;
+
+  border: 1px solid #e1e8e4;
+
+  border-radius: 14px;
+
+  background: #ffffff;
+
+  color: #26332e;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+}
+
+.footer-small svg {
+  width: 19px;
+  height: 19px;
+
+  fill: none;
+
+  stroke: currentColor;
+
+  stroke-width: 1.6;
+
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* =========================================================
+   LEAVE
+========================================================= */
+
+.leave-button {
+  height: 44px;
+
+  padding: 0 24px;
+
+  border: none;
+
+  border-radius: 14px;
+
+  background: #ff4d4d;
+
+  color: #ffffff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.leave-button:hover {
+  background: #ed3e3e;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1050px) {
+  .coding-editor {
+    width: 350px;
+    min-width: 350px;
+  }
+
+  .participant-card {
+    min-width: 145px;
+  }
+
+  .footer-large {
+    padding: 0 14px;
+  }
+}
+
+@media (max-width: 850px) {
+  .coding-editor {
+    position: absolute;
+
+    right: 0;
+    top: 66px;
+    bottom: 82px;
+
+    width: min(410px, 90vw);
+    min-width: 0;
+
+    z-index: 20;
+
+    box-shadow:
+      -8px 0 30px rgba(0, 0, 0, 0.12);
+  }
+
+  .meeting-top-actions {
+    gap: 5px;
+  }
+
+  .top-action {
+    width: 40px;
+  }
+
+  .footer-center {
+    gap: 5px;
+  }
+
+  .footer-large span {
+    display: none;
+  }
+
+  .footer-large {
+    width: 50px;
+    padding: 0;
+  }
+}
