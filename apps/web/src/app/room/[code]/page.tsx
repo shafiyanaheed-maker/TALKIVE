@@ -1,650 +1,1668 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { use, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  Mic,
+  MicOff,
+  Video,
+  VideoOff,
+  MonitorUp,
+  Hand,
+  MessageSquare,
+  Users,
+  Sparkles,
+  ShieldAlert,
+  PhoneOff,
+  Copy,
+  Check,
+  Send,
+  Sun,
+  Moon,
+  MoreHorizontal,
+  Settings,
+  Pin,
+  Maximize2,
+  Volume2,
+  X,
+  Search,
+  FileText,
+  Clock3,
+  Wifi,
+  ChevronDown,
+} from "lucide-react";
 
-/* =========================================================
-   ICONS
-========================================================= */
+import { useMeetingStore } from "@/stores/meetingStore";
+import type { ChatMessagePayload } from "@talkive/types";
 
-function UsersIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
-      <circle cx="9.5" cy="7" r="4" />
-      <path d="M17 3.2a4 4 0 0 1 0 7.6" />
-      <path d="M21 21v-2a4 4 0 0 0-3-3.87" />
-    </svg>
-  );
-}
-
-function ChatIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M20 11.5a8 8 0 0 1-8 8H7l-4 3v-5.5a8 8 0 1 1 17-5.5Z" />
-    </svg>
-  );
-}
-
-function PenIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="m4 20 4.2-1 10.6-10.6a2.8 2.8 0 0 0-4-4L4.2 15Z" />
-      <path d="m13.5 5.5 5 5" />
-      <path d="M4 20h5" />
-    </svg>
-  );
-}
-
-function NotesIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="5" y="3" width="14" height="18" rx="2" />
-      <path d="M8 8h8M8 12h8M8 16h5" />
-    </svg>
-  );
-}
-
-function CodeIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="m8 9-4 3 4 3" />
-      <path d="m16 9 4 3-4 3" />
-      <path d="m14 5-4 14" />
-    </svg>
-  );
-}
-
-function TrophyIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M8 4h8v5a4 4 0 0 1-8 0Z" />
-      <path d="M8 6H4v2a4 4 0 0 0 4 4" />
-      <path d="M16 6h4v2a4 4 0 0 1-4 4" />
-      <path d="M12 13v4" />
-      <path d="M8 21h8" />
-      <path d="M9 17h6" />
-    </svg>
-  );
-}
-
-function MicIcon({ off = false }: { off?: boolean }) {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="8" y="3" width="8" height="12" rx="4" />
-      <path d="M5 11a7 7 0 0 0 14 0" />
-      <path d="M12 18v3" />
-      <path d="M8 21h8" />
-      {off && <path d="m4 4 16 16" />}
-    </svg>
-  );
-}
-
-function CameraIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="3" y="6" width="12" height="12" rx="2" />
-      <path d="m15 10 6-3v10l-6-3Z" />
-    </svg>
-  );
-}
-
-function ScreenIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="3" y="4" width="18" height="13" rx="2" />
-      <path d="M8 21h8M12 17v4" />
-      <path d="m9 10 2 2 4-4" />
-    </svg>
-  );
-}
-
-function RecordIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="8" />
-    </svg>
-  );
-}
-
-function KeyboardIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="3" y="6" width="18" height="12" rx="2" />
-      <path d="M7 10h.01M10 10h.01M13 10h.01M16 10h.01" />
-      <path d="M7 14h10" />
-    </svg>
-  );
-}
-
-function MoonIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M20 15.5A8 8 0 0 1 8.5 4 8 8 0 1 0 20 15.5Z" />
-    </svg>
-  );
-}
-
-function SettingsIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.05.05-1.42 1.42-.05-.05a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.04 1.56V20h-2v-.07a1.7 1.7 0 0 0-1.04-1.56 1.7 1.7 0 0 0-1.88.34l-.05.05-1.42-1.42.05-.05A1.7 1.7 0 0 0 9.4 15a1.7 1.7 0 0 0-1.56-1.04H7v-2h.84A1.7 1.7 0 0 0 9.4 10a1.7 1.7 0 0 0-.34-1.88l-.05-.05 1.42-1.42.05.05a1.7 1.7 0 0 0 1.88.34A1.7 1.7 0 0 0 13.4 5.5V5h2v.5a1.7 1.7 0 0 0 1.04 1.54 1.7 1.7 0 0 0 1.88-.34l.05-.05 1.42 1.42-.05.05A1.7 1.7 0 0 0 19.4 10a1.7 1.7 0 0 0 1.56 1.04H21v2h-.04A1.7 1.7 0 0 0 19.4 15Z" />
-    </svg>
-  );
-}
-
-/* =========================================================
-   PARTICIPANT
-========================================================= */
-
-function ParticipantCard({
-  name,
-  gradient = false,
-  muted = false,
+export default function RoomPage({
+  params,
 }: {
-  name: string;
-  gradient?: boolean;
-  muted?: boolean;
+  params: Promise<{ code: string }>;
 }) {
-  return (
-    <div
-      className={`participant-card ${
-        gradient ? "participant-gradient" : "participant-empty"
-      }`}
-    >
-      {muted && (
-        <div className="participant-muted">
-          <MicIcon off />
-        </div>
-      )}
+  const resolvedParams = use(params);
+  const roomCode = resolvedParams.code.toUpperCase();
 
-      {!gradient && (
-        <div className="participant-avatar">
-          <svg viewBox="0 0 24 24">
-            <circle cx="12" cy="8" r="3.5" />
-            <path d="M6 20v-2a6 6 0 0 1 12 0v2" />
-          </svg>
-        </div>
-      )}
-
-      <span className="participant-label">{name}</span>
-    </div>
-  );
-}
-
-/* =========================================================
-   CODE EDITOR
-========================================================= */
-
-function CodeEditor() {
-  const [language, setLanguage] = useState("JavaScript");
-
-  const [code, setCode] = useState(`// JavaScript
-console.log("Hello, World!");`);
-
-  const [output, setOutput] = useState("");
-  const [showOutput, setShowOutput] = useState(false);
-
-  const runCode = () => {
-    if (language !== "JavaScript") {
-      setOutput(
-        `${language} execution requires a backend compiler service.`
-      );
-      setShowOutput(true);
-      return;
-    }
-
-    const logs: string[] = [];
-
-    try {
-      const sandboxConsole = {
-        log: (...values: unknown[]) => {
-          logs.push(
-            values
-              .map((value) =>
-                typeof value === "object"
-                  ? JSON.stringify(value)
-                  : String(value)
-              )
-              .join(" ")
-          );
-        },
-      };
-
-      const execute = new Function("console", code);
-
-      execute(sandboxConsole);
-
-      setOutput(
-        logs.length
-          ? logs.join("\n")
-          : "Program finished successfully."
-      );
-    } catch (error) {
-      setOutput(
-        `Error: ${
-          error instanceof Error
-            ? error.message
-            : String(error)
-        }`
-      );
-    }
-
-    setShowOutput(true);
-  };
-
-  const shareCode = async () => {
-    try {
-      await navigator.clipboard.writeText(code);
-      alert("Code copied to clipboard.");
-    } catch {
-      alert("Could not copy code.");
-    }
-  };
-
-  const saveCode = () => {
-    const blob = new Blob([code], {
-      type: "text/javascript",
-    });
-
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-
-    link.href = url;
-    link.download = "talkive-code.js";
-
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-    URL.revokeObjectURL(url);
-  };
-
-  return (
-    <aside className="coding-editor">
-
-      {/* Editor heading */}
-
-      <div className="editor-heading">
-        <h2>Code Editor</h2>
-
-        <button
-          type="button"
-          className="editor-close"
-          aria-label="Close code editor"
-        >
-          ×
-        </button>
-      </div>
-
-      {/* Language */}
-
-      <div className="editor-language">
-        <select
-          value={language}
-          onChange={(event) =>
-            setLanguage(event.target.value)
-          }
-        >
-          <option>JavaScript</option>
-          <option>Python</option>
-          <option>C++</option>
-          <option>Java</option>
-        </select>
-
-        <span className="select-arrow">⌄</span>
-      </div>
-
-      {/* Buttons */}
-
-      <div className="editor-buttons">
-
-        <button
-          type="button"
-          className="editor-run"
-          onClick={runCode}
-        >
-          <span>▷</span>
-          Run
-        </button>
-
-        <button
-          type="button"
-          className="editor-secondary"
-          onClick={shareCode}
-        >
-          <span>♧</span>
-          Share
-        </button>
-
-        <button
-          type="button"
-          className="editor-secondary"
-          onClick={saveCode}
-        >
-          <span>⇩</span>
-          Save
-        </button>
-
-      </div>
-
-      {/* Code */}
-
-      <div className="editor-code-wrapper">
-        <textarea
-          className="editor-code"
-          value={code}
-          onChange={(event) =>
-            setCode(event.target.value)
-          }
-          spellCheck={false}
-          aria-label="Code editor"
-        />
-      </div>
-
-      {/* Output */}
-
-      {showOutput && (
-        <div className="compiler-output">
-
-          <div className="compiler-output-title">
-            Output
-          </div>
-
-          <pre>{output}</pre>
-
-        </div>
-      )}
-
-      {/* AI button */}
-
-      <button
-        type="button"
-        className="editor-ai-button"
-        aria-label="AI coding assistant"
-      >
-        <span>♙</span>
-        <i />
-      </button>
-
-    </aside>
-  );
-}
-
-/* =========================================================
-   MEETING ROOM
-========================================================= */
-
-export default function MeetingRoom() {
-  const params = useParams<{ code: string }>();
   const router = useRouter();
 
-  const code = params?.code;
+  const {
+    meeting,
+    currentUser,
+    isAudioMuted,
+    isVideoMuted,
+    isScreenSharing,
+    isHandRaised,
+    activeSidePanel,
+    chatMessages,
+    toggleAudio,
+    toggleVideo,
+    toggleScreenShare,
+    toggleHandRaise,
+    setSidePanel,
+    addChatMessage,
+    reset,
+  } = useMeetingStore();
 
-  const isCodingBootcamp = useMemo(
-    () => code === "coding-bootcamp",
-    [code]
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const localMediaStreamRef = useRef<MediaStream | null>(null);
+
+  const [copied, setCopied] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const [isDark, setIsDark] = useState(true);
+  const [showMore, setShowMore] = useState(false);
+  const [meetingSeconds, setMeetingSeconds] = useState(0);
+
+  const [liveCaption, setLiveCaption] = useState(
+    "Listening for your voice..."
   );
 
-  const [seconds, setSeconds] = useState(181);
+  const [isCaptionListening, setIsCaptionListening] =
+    useState(false);
 
-  const [micOn, setMicOn] = useState(true);
-  const [cameraOn, setCameraOn] = useState(true);
+  /*
+   * =========================================================
+   * THEME
+   * =========================================================
+   */
+
+  useEffect(() => {
+    const savedTheme = window.localStorage.getItem(
+      "talkive-meeting-theme"
+    );
+
+    if (savedTheme === "light") {
+      setIsDark(false);
+    } else {
+      setIsDark(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle(
+      "dark",
+      isDark
+    );
+
+    window.localStorage.setItem(
+      "talkive-meeting-theme",
+      isDark ? "dark" : "light"
+    );
+  }, [isDark]);
+
+  /*
+   * =========================================================
+   * MEETING TIMER
+   * =========================================================
+   */
 
   useEffect(() => {
     const timer = window.setInterval(() => {
-      setSeconds((current) => current + 1);
+      setMeetingSeconds((value) => value + 1);
     }, 1000);
 
     return () => window.clearInterval(timer);
   }, []);
 
-  const formattedTime = useMemo(() => {
-    const hours = Math.floor(seconds / 3600);
+  function formatMeetingTime(totalSeconds: number) {
+    const hours = Math.floor(totalSeconds / 3600);
+
     const minutes = Math.floor(
-      (seconds % 3600) / 60
+      (totalSeconds % 3600) / 60
     );
-    const secs = seconds % 60;
 
-    return [
-      hours,
-      minutes,
-      secs,
-    ]
-      .map((value) =>
-        String(value).padStart(2, "0")
-      )
-      .join(":");
-  }, [seconds]);
+    const seconds = totalSeconds % 60;
 
-  const leaveMeeting = () => {
-    router.push("/dashboard/coding");
-  };
+    if (hours > 0) {
+      return `${String(hours).padStart(2, "0")}:${String(
+        minutes
+      ).padStart(2, "0")}:${String(seconds).padStart(
+        2,
+        "0"
+      )}`;
+    }
+
+    return `${String(minutes).padStart(2, "0")}:${String(
+      seconds
+    ).padStart(2, "0")}`;
+  }
+
+  /*
+   * =========================================================
+   * CAMERA + MICROPHONE
+   * =========================================================
+   */
+
+  useEffect(() => {
+    let stream: MediaStream | null = null;
+    let cancelled = false;
+
+    async function startMedia() {
+      try {
+        if (
+          !navigator.mediaDevices ||
+          !navigator.mediaDevices.getUserMedia
+        ) {
+          return;
+        }
+
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
+        });
+
+        if (cancelled) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+
+        localMediaStreamRef.current = stream;
+
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+        }
+      } catch (error) {
+        console.warn(
+          "Camera/microphone permission was not granted:",
+          error
+        );
+      }
+    }
+
+    startMedia();
+
+    return () => {
+      cancelled = true;
+
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+      }
+
+      localMediaStreamRef.current = null;
+    };
+  }, []);
+
+  /*
+   * =========================================================
+   * SYNC CAMERA STATE
+   * =========================================================
+   */
+
+  useEffect(() => {
+    const stream = localMediaStreamRef.current;
+
+    if (!stream) {
+      return;
+    }
+
+    stream
+      .getVideoTracks()
+      .forEach((track) => {
+        track.enabled = !isVideoMuted;
+      });
+  }, [isVideoMuted]);
+
+  /*
+   * =========================================================
+   * SYNC MICROPHONE STATE
+   * =========================================================
+   */
+
+  useEffect(() => {
+    const stream = localMediaStreamRef.current;
+
+    if (!stream) {
+      return;
+    }
+
+    stream
+      .getAudioTracks()
+      .forEach((track) => {
+        track.enabled = !isAudioMuted;
+      });
+  }, [isAudioMuted]);
+
+  /*
+   * =========================================================
+   * LIVE AI CAPTIONS
+   * =========================================================
+   */
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setLiveCaption(
+        "Live captions are not supported in this browser."
+      );
+
+      setIsCaptionListening(false);
+
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+
+    let stopped = false;
+
+    recognition.onstart = () => {
+      if (!stopped) {
+        setIsCaptionListening(true);
+      }
+    };
+
+    recognition.onresult = (event: any) => {
+      let transcript = "";
+
+      for (
+        let i = event.resultIndex;
+        i < event.results.length;
+        i++
+      ) {
+        transcript += event.results[i][0].transcript;
+      }
+
+      const cleanedTranscript = transcript.trim();
+
+      if (cleanedTranscript) {
+        setLiveCaption(cleanedTranscript);
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      console.warn(
+        "Speech recognition error:",
+        event?.error
+      );
+
+      if (event?.error === "not-allowed") {
+        setLiveCaption(
+          "Microphone permission is required for live captions."
+        );
+      } else if (event?.error === "audio-capture") {
+        setLiveCaption(
+          "Microphone is unavailable for live captions."
+        );
+      } else if (event?.error === "network") {
+        setLiveCaption(
+          "Caption connection interrupted. Trying again..."
+        );
+      }
+
+      setIsCaptionListening(false);
+    };
+
+    recognition.onend = () => {
+      if (stopped) {
+        return;
+      }
+
+      setIsCaptionListening(false);
+
+      window.setTimeout(() => {
+        if (stopped) {
+          return;
+        }
+
+        try {
+          recognition.start();
+        } catch {
+          // Recognition may already be starting.
+        }
+      }, 300);
+    };
+
+    try {
+      recognition.start();
+    } catch (error) {
+      console.warn(
+        "Could not start speech recognition:",
+        error
+      );
+    }
+
+    return () => {
+      stopped = true;
+
+      recognition.onstart = null;
+      recognition.onresult = null;
+      recognition.onerror = null;
+      recognition.onend = null;
+
+      try {
+        recognition.stop();
+      } catch {
+        // Recognition may already be stopped.
+      }
+
+      setIsCaptionListening(false);
+    };
+  }, []);
+
+  /*
+   * =========================================================
+   * COPY LINK
+   * =========================================================
+   */
+
+  async function copyMeetingLink() {
+    try {
+      await navigator.clipboard.writeText(
+        window.location.href
+      );
+
+      setCopied(true);
+
+      window.setTimeout(() => {
+        setCopied(false);
+      }, 2000);
+    } catch (error) {
+      console.warn(
+        "Could not copy meeting link:",
+        error
+      );
+    }
+  }
+
+  /*
+   * =========================================================
+   * CHAT
+   * =========================================================
+   */
+
+  function handleSendChat(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
+    if (!chatInput.trim()) {
+      return;
+    }
+
+    const message: ChatMessagePayload = {
+      id: `message_${Date.now()}`,
+      senderId: currentUser?.id || "local-user",
+      senderName: currentUser?.name || "You",
+      text: chatInput.trim(),
+      timestamp: Date.now(),
+    };
+
+    addChatMessage(message);
+    setChatInput("");
+  }
+
+  /*
+   * =========================================================
+   * LEAVE
+   * =========================================================
+   */
+
+  function handleLeaveMeeting() {
+    if (localMediaStreamRef.current) {
+      localMediaStreamRef.current
+        .getTracks()
+        .forEach((track) => track.stop());
+    }
+
+    localMediaStreamRef.current = null;
+
+    reset();
+
+    router.push("/dashboard/business");
+  }
+
+  /*
+   * =========================================================
+   * HELPERS
+   * =========================================================
+   */
+
+  function initials(name?: string) {
+    if (!name) {
+      return "Y";
+    }
+
+    return name
+      .split(" ")
+      .map((part) => part.charAt(0))
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+  }
+
+  const background = isDark
+    ? "bg-[#070b12]"
+    : "bg-[#f4f7fb]";
+
+  const headerBackground = isDark
+    ? "bg-[#0b111c]/95"
+    : "bg-white/95";
+
+  const cardBackground = isDark
+    ? "bg-[#101827]"
+    : "bg-white";
+
+  const secondaryBackground = isDark
+    ? "bg-[#0d1523]"
+    : "bg-[#eef3f8]";
+
+  const borderColor = isDark
+    ? "border-white/[0.07]"
+    : "border-slate-200";
+
+  const primaryText = isDark
+    ? "text-white"
+    : "text-slate-900";
+
+  const secondaryText = isDark
+    ? "text-slate-400"
+    : "text-slate-500";
+
+  /*
+   * =========================================================
+   * UI
+   * =========================================================
+   */
 
   return (
-    <main className="meeting-screen">
+    <div
+      className={`h-screen w-screen overflow-hidden ${background} ${primaryText} transition-colors duration-300`}
+    >
+      {/* =====================================================
+          HEADER
+          ===================================================== */}
 
-      {/* =================================================
-          TOP HEADER
-      ================================================= */}
+      <header
+        className={`h-[68px] flex-shrink-0 ${headerBackground} backdrop-blur-xl border-b ${borderColor} px-4 md:px-6 flex items-center justify-between`}
+      >
+        {/* LEFT */}
 
-      <header className="meeting-topbar">
+        <div className="flex items-center gap-3 min-w-0">
+          {/* LOGO */}
 
-        <div className="meeting-brand">
-          TALKIV<span>E</span>
-        </div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+              <span className="text-white font-black text-xs">
+                T
+              </span>
+            </div>
 
-        <div className="meeting-time">
-          {formattedTime}
-        </div>
+            <span className="hidden sm:block font-extrabold tracking-tight text-sm">
+              TALKIVE
+            </span>
+          </div>
 
-        <div className="meeting-top-actions">
+          <div
+            className={`hidden sm:block h-6 w-px ${
+              isDark
+                ? "bg-white/10"
+                : "bg-slate-200"
+            }`}
+          />
 
-          <button
-            type="button"
-            className="top-action"
-            aria-label="Participants"
-          >
-            <UsersIcon />
-          </button>
+          {/* MEETING */}
 
-          <button
-            type="button"
-            className="top-action"
-            aria-label="Chat"
-          >
-            <ChatIcon />
-          </button>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-sm truncate max-w-[180px] md:max-w-[300px]">
+                {meeting?.title || "Business Meeting"}
+              </span>
 
-          <button
-            type="button"
-            className="top-action"
-            aria-label="Whiteboard"
-          >
-            <PenIcon />
-          </button>
+              <span className="hidden md:inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Business
+              </span>
+            </div>
 
-          <button
-            type="button"
-            className="top-action"
-            aria-label="Notes"
-          >
-            <NotesIcon />
-          </button>
-
-          {isCodingBootcamp && (
-            <button
-              type="button"
-              className="top-action top-action-active"
-              aria-label="Code editor"
+            <div
+              className={`flex items-center gap-2 text-[10px] ${secondaryText} mt-0.5`}
             >
-              <CodeIcon />
-            </button>
-          )}
+              <span className="font-mono">
+                {roomCode}
+              </span>
 
-          <button
-            type="button"
-            className="top-action"
-            aria-label="Achievements"
-          >
-            <TrophyIcon />
-          </button>
+              <button
+                type="button"
+                onClick={copyMeetingLink}
+                className="hover:text-emerald-500 transition"
+                title="Copy meeting link"
+              >
+                {copied ? (
+                  <Check className="w-3 h-3 text-emerald-500" />
+                ) : (
+                  <Copy className="w-3 h-3" />
+                )}
+              </button>
 
+              <span className="opacity-40">•</span>
+
+              <Clock3 className="w-3 h-3" />
+
+              <span className="font-mono">
+                {formatMeetingTime(meetingSeconds)}
+              </span>
+            </div>
+          </div>
         </div>
 
-      </header>
+        {/* RIGHT */}
 
-      {/* =================================================
-          MAIN CONTENT
-      ================================================= */}
+        <div className="flex items-center gap-2">
+          {/* CONNECTION */}
 
-      <section className="meeting-body">
+          <div
+            className={`hidden lg:flex items-center gap-2 px-3 py-2 rounded-xl ${
+              isDark
+                ? "bg-white/[0.04]"
+                : "bg-slate-100"
+            }`}
+          >
+            <Wifi className="w-3.5 h-3.5 text-emerald-500" />
 
-        {/* =================================================
-            VIDEO SIDE
-        ================================================= */}
-
-        <section className="video-side">
-
-          <div className="main-video">
-
-            <span className="main-participant-name">
-              ravalibandari431
+            <span
+              className={`text-[11px] font-medium ${secondaryText}`}
+            >
+              Good connection
             </span>
 
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
           </div>
 
-          {/* Participants */}
+          {/* THEME */}
 
-          <div className="participants">
+          <button
+            type="button"
+            onClick={() => setIsDark((value) => !value)}
+            title={
+              isDark
+                ? "Switch to light mode"
+                : "Switch to dark mode"
+            }
+            className={`w-10 h-10 rounded-xl flex items-center justify-center transition ${
+              isDark
+                ? "bg-white/[0.05] hover:bg-white/[0.09] text-slate-300"
+                : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+            }`}
+          >
+            {isDark ? (
+              <Sun className="w-4 h-4" />
+            ) : (
+              <Moon className="w-4 h-4" />
+            )}
+          </button>
 
-            <ParticipantCard
-              name="Sarah"
-              gradient
+          {/* MORE */}
+
+          <button
+            type="button"
+            onClick={() =>
+              setShowMore((value) => !value)
+            }
+            className={`w-10 h-10 rounded-xl flex items-center justify-center transition ${
+              isDark
+                ? "hover:bg-white/[0.05]"
+                : "hover:bg-slate-100"
+            } ${secondaryText}`}
+          >
+            <MoreHorizontal className="w-5 h-5" />
+          </button>
+
+          {showMore && (
+            <div
+              className={`absolute top-[60px] right-4 z-50 w-52 rounded-2xl border ${borderColor} ${cardBackground} shadow-2xl p-2`}
+            >
+              <button
+                type="button"
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs ${secondaryText} hover:bg-emerald-500/10 hover:text-emerald-500`}
+              >
+                <Settings className="w-4 h-4" />
+                Meeting settings
+              </button>
+
+              <button
+                type="button"
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs ${secondaryText} hover:bg-emerald-500/10 hover:text-emerald-500`}
+              >
+                <FileText className="w-4 h-4" />
+                Meeting details
+              </button>
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* =====================================================
+          MAIN
+          ===================================================== */}
+
+      <main className="h-[calc(100vh-68px)] flex overflow-hidden">
+        {/* ===================================================
+            VIDEO WORKSPACE
+            =================================================== */}
+
+        <section className="relative flex-1 min-w-0 flex flex-col p-3 md:p-5 overflow-hidden">
+          {/* SOFT EMERALD AMBIENT BACKGROUND */}
+
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div
+              className={`absolute left-[8%] top-[8%] w-[42%] h-[55%] rounded-full blur-[110px] ${
+                isDark
+                  ? "bg-emerald-500/[0.10]"
+                  : "bg-emerald-400/[0.16]"
+              }`}
             />
 
-            <ParticipantCard
-              name="Michael"
-              gradient
-              muted
+            <div
+              className={`absolute right-[8%] top-[10%] w-[42%] h-[55%] rounded-full blur-[110px] ${
+                isDark
+                  ? "bg-emerald-500/[0.08]"
+                  : "bg-emerald-300/[0.13]"
+              }`}
             />
 
-            <ParticipantCard
-              name="Emily"
+            <div
+              className={`absolute left-[25%] bottom-[2%] w-[50%] h-[25%] rounded-full blur-[100px] ${
+                isDark
+                  ? "bg-emerald-600/[0.06]"
+                  : "bg-emerald-400/[0.08]"
+              }`}
             />
-
           </div>
 
+          {/* VIDEO GRID */}
+
+          <div className="relative z-10 flex-1 min-h-0 max-w-[1500px] w-full mx-auto">
+            <div className="h-full grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
+              {/* =================================================
+                  LOCAL VIDEO
+                  ================================================= */}
+
+              <div
+                className={`relative min-h-[280px] rounded-2xl md:rounded-3xl overflow-hidden ${
+                  isDark
+                    ? "bg-[#111722]"
+                    : "bg-slate-200"
+                } border ${borderColor} shadow-2xl group`}
+              >
+                {/* VIDEO */}
+
+                <video
+                  ref={localVideoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className={`w-full h-full object-cover transition ${
+                    isVideoMuted
+                      ? "opacity-0"
+                      : "opacity-100"
+                  }`}
+                  style={{
+                    transform: "scaleX(-1)",
+                  }}
+                />
+
+                {/* CAMERA OFF */}
+
+                {isVideoMuted && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white text-2xl font-extrabold shadow-xl shadow-emerald-500/20">
+                      {initials(currentUser?.name)}
+                    </div>
+
+                    <p
+                      className={`mt-4 text-sm font-semibold ${
+                        isDark
+                          ? "text-white"
+                          : "text-slate-800"
+                      }`}
+                    >
+                      Camera is off
+                    </p>
+
+                    <p
+                      className={`text-xs mt-1 ${secondaryText}`}
+                    >
+                      Turn your camera on to share video
+                    </p>
+                  </div>
+                )}
+
+                {/* GRADIENT */}
+
+                <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/70 to-transparent pointer-events-none" />
+
+                {/* NAME */}
+
+                <div className="absolute bottom-4 left-4 flex items-center gap-2">
+                  <div className="px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-md text-xs font-medium text-white">
+                    {currentUser?.name || "You"}
+
+                    <span className="text-white/50 ml-1">
+                      (You)
+                    </span>
+                  </div>
+
+                  {isAudioMuted && (
+                    <div className="w-8 h-8 rounded-lg bg-black/60 backdrop-blur-md flex items-center justify-center">
+                      <MicOff className="w-3.5 h-3.5 text-rose-400" />
+                    </div>
+                  )}
+                </div>
+
+                {/* TOP ACTIONS */}
+
+                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                  <button
+                    type="button"
+                    className="w-9 h-9 rounded-xl bg-black/50 backdrop-blur-md text-white flex items-center justify-center"
+                  >
+                    <Pin className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    className="w-9 h-9 rounded-xl bg-black/50 backdrop-blur-md text-white flex items-center justify-center"
+                  >
+                    <Maximize2 className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* HAND */}
+
+                {isHandRaised && (
+                  <div className="absolute top-4 left-4 w-10 h-10 rounded-xl bg-amber-400 text-black flex items-center justify-center shadow-lg">
+                    <Hand className="w-5 h-5" />
+                  </div>
+                )}
+              </div>
+
+              {/* =================================================
+                  HOST
+                  ================================================= */}
+
+              <div
+                className={`relative min-h-[280px] rounded-2xl md:rounded-3xl overflow-hidden ${
+                  isDark
+                    ? "bg-[#101827]"
+                    : "bg-white"
+                } border ${borderColor} shadow-2xl group flex items-center justify-center`}
+              >
+                {/* SUBTLE BACKGROUND */}
+
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.10),transparent_55%)]" />
+
+                <div className="relative flex flex-col items-center">
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white text-2xl font-extrabold shadow-xl shadow-emerald-500/20">
+                    TM
+                  </div>
+
+                  <span className="mt-4 text-sm font-bold">
+                    Prof. Tara Miller
+                  </span>
+
+                  <span
+                    className={`mt-1 text-xs ${secondaryText}`}
+                  >
+                    Instructor
+                  </span>
+
+                  <div className="mt-4 flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-[10px] font-bold uppercase tracking-wider">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    Host
+                  </div>
+                </div>
+
+                {/* BOTTOM */}
+
+                <div className="absolute bottom-4 left-4 flex items-center gap-2">
+                  <div className="px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-md text-xs font-medium text-white">
+                    Prof. Tara Miller
+                  </div>
+
+                  <div className="w-8 h-8 rounded-lg bg-black/60 backdrop-blur-md flex items-center justify-center">
+                    <Volume2 className="w-3.5 h-3.5 text-emerald-400" />
+                  </div>
+                </div>
+
+                {/* TOP RIGHT */}
+
+                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                  <button
+                    type="button"
+                    className="w-9 h-9 rounded-xl bg-black/50 backdrop-blur-md text-white flex items-center justify-center"
+                  >
+                    <Pin className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    className="w-9 h-9 rounded-xl bg-black/50 backdrop-blur-md text-white flex items-center justify-center"
+                  >
+                    <Maximize2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ===================================================
+              CAPTIONS
+              =================================================== */}
+
+          <div
+            className={`relative z-10 mt-3 md:mt-4 min-h-[54px] rounded-2xl border ${borderColor} ${
+              isDark
+                ? "bg-[#0b1019]/90"
+                : "bg-white"
+            } backdrop-blur-xl flex items-center justify-center px-5`}
+          >
+            <div className="flex items-center gap-3 text-xs text-center max-w-full">
+              <span className="flex-shrink-0 px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-600 border border-emerald-500/15 font-bold text-[10px] tracking-wide">
+                AI CAPTIONS
+              </span>
+
+              <span
+                className={`w-1.5 h-1.5 flex-shrink-0 rounded-full ${
+                  isCaptionListening
+                    ? "bg-emerald-500 animate-pulse"
+                    : "bg-slate-400"
+                }`}
+              />
+
+              <span
+                className={`${secondaryText} truncate`}
+              >
+                {liveCaption}
+              </span>
+            </div>
+          </div>
         </section>
 
-        {/* =================================================
-            COMPILER
-        ================================================= */}
+        {/* ===================================================
+            SIDE PANEL
+            =================================================== */}
 
-        {isCodingBootcamp && <CodeEditor />}
+        {activeSidePanel !== "none" && (
+          <aside
+            className={`hidden md:flex w-[360px] xl:w-[400px] flex-shrink-0 border-l ${borderColor} ${cardBackground} flex-col`}
+          >
+            {/* PANEL HEADER */}
 
-      </section>
+            <div
+              className={`h-[68px] flex-shrink-0 border-b ${borderColor} px-5 flex items-center justify-between`}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-9 h-9 rounded-xl ${
+                    activeSidePanel === "chat"
+                      ? "bg-emerald-500/10 text-emerald-600"
+                      : activeSidePanel ===
+                        "participants"
+                      ? "bg-emerald-500/10 text-emerald-600"
+                      : activeSidePanel ===
+                        "ai_copilot"
+                      ? "bg-violet-500/10 text-violet-600"
+                      : "bg-amber-500/10 text-amber-600"
+                  } flex items-center justify-center`}
+                >
+                  {activeSidePanel === "chat" && (
+                    <MessageSquare className="w-4 h-4" />
+                  )}
 
-      {/* =================================================
-          BOTTOM CONTROLS
-      ================================================= */}
+                  {activeSidePanel ===
+                    "participants" && (
+                    <Users className="w-4 h-4" />
+                  )}
 
-      <footer className="meeting-footer">
+                  {activeSidePanel === "ai_copilot" && (
+                    <Sparkles className="w-4 h-4" />
+                  )}
 
-        {/* Left */}
+                  {activeSidePanel === "proctoring" && (
+                    <ShieldAlert className="w-4 h-4" />
+                  )}
+                </div>
 
-        <div className="footer-left">
+                <div>
+                  <h2 className="text-sm font-bold">
+                    {activeSidePanel === "chat" &&
+                      "Meeting Chat"}
+
+                    {activeSidePanel ===
+                      "participants" &&
+                      "Participants"}
+
+                    {activeSidePanel ===
+                      "ai_copilot" &&
+                      "AI Copilot"}
+
+                    {activeSidePanel ===
+                      "proctoring" &&
+                      "Proctoring"}
+                  </h2>
+
+                  <p
+                    className={`text-[10px] mt-0.5 ${secondaryText}`}
+                  >
+                    {activeSidePanel === "chat" &&
+                      "Communicate with your team"}
+
+                    {activeSidePanel ===
+                      "participants" &&
+                      "People in this meeting"}
+
+                    {activeSidePanel ===
+                      "ai_copilot" &&
+                      "Intelligent meeting assistance"}
+
+                    {activeSidePanel ===
+                      "proctoring" &&
+                      "Meeting security monitoring"}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSidePanel("none")}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center ${secondaryText} ${
+                  isDark
+                    ? "hover:bg-white/[0.05]"
+                    : "hover:bg-slate-100"
+                }`}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* =================================================
+                CHAT
+                ================================================= */}
+
+            {activeSidePanel === "chat" && (
+              <div className="flex-1 flex flex-col min-h-0">
+                <div className="p-4">
+                  <div
+                    className={`h-10 rounded-xl border ${borderColor} ${
+                      isDark
+                        ? "bg-white/[0.03]"
+                        : "bg-slate-50"
+                    } flex items-center px-3 gap-2`}
+                  >
+                    <Search
+                      className={`w-4 h-4 ${secondaryText}`}
+                    />
+
+                    <input
+                      placeholder="Search messages..."
+                      className={`bg-transparent outline-none border-none text-xs flex-1 ${primaryText}`}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto px-4 space-y-4">
+                  {chatMessages.length === 0 && (
+                    <div className="h-full flex flex-col items-center justify-center text-center">
+                      <div
+                        className={`w-14 h-14 rounded-2xl ${
+                          isDark
+                            ? "bg-white/[0.04]"
+                            : "bg-slate-100"
+                        } flex items-center justify-center mb-4`}
+                      >
+                        <MessageSquare
+                          className={`w-6 h-6 ${secondaryText}`}
+                        />
+                      </div>
+
+                      <p className="text-sm font-semibold">
+                        No messages yet
+                      </p>
+
+                      <p
+                        className={`text-xs ${secondaryText} mt-1 max-w-[220px]`}
+                      >
+                        Start the conversation with your
+                        team.
+                      </p>
+                    </div>
+                  )}
+
+                  {chatMessages.map((message) => (
+                    <div
+                      key={message.id}
+                      className="space-y-1"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 text-white flex items-center justify-center text-[9px] font-bold">
+                          {initials(message.senderName)}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[11px] font-semibold truncate">
+                              {message.senderName}
+                            </span>
+
+                            <span
+                              className={`text-[9px] ${secondaryText}`}
+                            >
+                              {new Date(
+                                message.timestamp
+                              ).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div
+                        className={`ml-9 p-3 rounded-xl text-xs ${
+                          isDark
+                            ? "bg-white/[0.04]"
+                            : "bg-slate-50"
+                        }`}
+                      >
+                        {message.text}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <form
+                  onSubmit={handleSendChat}
+                  className={`p-4 border-t ${borderColor}`}
+                >
+                  <div
+                    className={`flex items-center gap-2 p-1.5 rounded-xl border ${borderColor} ${
+                      isDark
+                        ? "bg-white/[0.03]"
+                        : "bg-slate-50"
+                    }`}
+                  >
+                    <input
+                      value={chatInput}
+                      onChange={(event) =>
+                        setChatInput(event.target.value)
+                      }
+                      placeholder="Write a message..."
+                      className={`flex-1 bg-transparent outline-none px-2 text-xs ${primaryText}`}
+                    />
+
+                    <button
+                      type="submit"
+                      className="w-9 h-9 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20"
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* =================================================
+                PARTICIPANTS
+                ================================================= */}
+
+            {activeSidePanel === "participants" && (
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <span
+                    className={`text-xs ${secondaryText}`}
+                  >
+                    2 people in this meeting
+                  </span>
+
+                  <button
+                    type="button"
+                    className="text-xs font-medium text-emerald-600"
+                  >
+                    Invite
+                  </button>
+                </div>
+
+                {/* YOU */}
+
+                <div
+                  className={`p-3 rounded-2xl border ${borderColor} ${
+                    isDark
+                      ? "bg-white/[0.025]"
+                      : "bg-slate-50"
+                  } mb-2`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-white flex items-center justify-center text-xs font-bold">
+                        {initials(currentUser?.name)}
+                      </div>
+
+                      <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white dark:border-[#101827]" />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-semibold truncate">
+                          {currentUser?.name || "You"}
+                        </p>
+
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 font-bold">
+                          YOU
+                        </span>
+                      </div>
+
+                      <p
+                        className={`text-[10px] mt-1 ${secondaryText}`}
+                      >
+                        {isAudioMuted
+                          ? "Microphone off"
+                          : "Microphone on"}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {isAudioMuted ? (
+                        <MicOff className="w-4 h-4 text-rose-400" />
+                      ) : (
+                        <Mic className="w-4 h-4 text-emerald-500" />
+                      )}
+
+                      {isVideoMuted ? (
+                        <VideoOff className="w-4 h-4 text-rose-400" />
+                      ) : (
+                        <Video className="w-4 h-4 text-emerald-500" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* HOST */}
+
+                <div
+                  className={`p-3 rounded-2xl border ${borderColor} ${
+                    isDark
+                      ? "bg-white/[0.025]"
+                      : "bg-slate-50"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white flex items-center justify-center text-xs font-bold">
+                      TM
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold truncate">
+                        Prof. Tara Miller
+                      </p>
+
+                      <p
+                        className={`text-[10px] mt-1 ${secondaryText}`}
+                      >
+                        Host · Instructor
+                      </p>
+                    </div>
+
+                    <span className="text-[9px] px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 font-bold">
+                      HOST
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* =================================================
+                AI COPILOT
+                ================================================= */}
+
+            {activeSidePanel === "ai_copilot" && (
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="rounded-2xl bg-gradient-to-br from-violet-500/10 to-emerald-500/10 border border-violet-500/20 p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-violet-500/10 text-violet-500 flex items-center justify-center">
+                      <Sparkles className="w-5 h-5" />
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-bold">
+                        AI Copilot
+                      </p>
+
+                      <p
+                        className={`text-[10px] ${secondaryText}`}
+                      >
+                        Listening to your meeting
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
+
+                    <span className="text-[10px] text-violet-500 font-semibold">
+                      AI is active
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-xs font-bold">
+                      Key discussion points
+                    </h3>
+
+                    <span
+                      className={`text-[9px] ${secondaryText}`}
+                    >
+                      Live
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {[
+                      "Product strategy discussion",
+                      "Team collaboration",
+                      "Project planning",
+                    ].map((item) => (
+                      <div
+                        key={item}
+                        className={`p-3 rounded-xl border ${borderColor} ${
+                          isDark
+                            ? "bg-white/[0.025]"
+                            : "bg-slate-50"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className="w-5 h-5 rounded-md bg-violet-500/10 text-violet-500 flex items-center justify-center text-[9px] font-bold">
+                            ✓
+                          </span>
+
+                          <span className="text-xs">
+                            {item}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-xs font-bold mb-2">
+                    Suggested action items
+                  </h3>
+
+                  <div
+                    className={`p-4 rounded-xl border ${borderColor} ${
+                      isDark
+                        ? "bg-white/[0.025]"
+                        : "bg-slate-50"
+                    }`}
+                  >
+                    <p
+                      className={`text-xs ${secondaryText}`}
+                    >
+                      Review meeting notes and assign
+                      responsibilities after the session.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* =================================================
+                PROCTORING
+                ================================================= */}
+
+            {activeSidePanel === "proctoring" && (
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                      <ShieldAlert className="w-5 h-5" />
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-bold">
+                        Proctoring Monitor
+                      </p>
+
+                      <p
+                        className={`text-[10px] ${secondaryText}`}
+                      >
+                        Authorized monitoring tools
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  className={`p-4 rounded-2xl border ${borderColor}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={`text-xs ${secondaryText}`}
+                    >
+                      Integrity status
+                    </span>
+
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+
+                      <span className="text-xs font-bold text-emerald-600">
+                        Active
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  className={`p-4 rounded-2xl border ${borderColor}`}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-bold">
+                      Session monitoring
+                    </span>
+
+                    <ChevronDown
+                      className={`w-4 h-4 ${secondaryText}`}
+                    />
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`text-[11px] ${secondaryText}`}
+                      >
+                        Camera status
+                      </span>
+
+                      <span className="text-[11px] text-emerald-600 font-medium">
+                        Connected
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`text-[11px] ${secondaryText}`}
+                      >
+                        Audio status
+                      </span>
+
+                      <span className="text-[11px] text-emerald-600 font-medium">
+                        Connected
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`text-[11px] ${secondaryText}`}
+                      >
+                        Session security
+                      </span>
+
+                      <span className="text-[11px] text-emerald-600 font-medium">
+                        Protected
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </aside>
+        )}
+      </main>
+
+      {/* =====================================================
+          BOTTOM CONTROL BAR
+          ===================================================== */}
+
+      <div
+        className={`absolute bottom-5 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-24px)] md:w-auto`}
+      >
+        <div
+          className={`mx-auto rounded-2xl md:rounded-3xl border ${borderColor} ${
+            isDark
+              ? "bg-[#101722]/95"
+              : "bg-white/95"
+          } backdrop-blur-xl shadow-2xl px-3 md:px-4 py-2.5 flex items-center justify-center gap-1.5 md:gap-2`}
+        >
+          {/* MIC */}
 
           <button
             type="button"
-            className={`footer-green ${
-              !micOn ? "control-off" : ""
-            }`}
-            onClick={() =>
-              setMicOn((value) => !value)
+            onClick={toggleAudio}
+            title={
+              isAudioMuted
+                ? "Turn microphone on"
+                : "Turn microphone off"
             }
-            aria-label="Microphone"
-          >
-            <MicIcon off={!micOn} />
-          </button>
-
-          <button
-            type="button"
-            className={`footer-green ${
-              !cameraOn ? "control-off" : ""
+            className={`w-11 h-11 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center transition ${
+              isAudioMuted
+                ? "bg-rose-500 text-white shadow-lg shadow-rose-500/20"
+                : isDark
+                ? "bg-white/[0.06] text-white hover:bg-white/[0.1]"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
             }`}
-            onClick={() =>
-              setCameraOn((value) => !value)
+          >
+            {isAudioMuted ? (
+              <MicOff className="w-4.5 h-4.5" />
+            ) : (
+              <Mic className="w-4.5 h-4.5" />
+            )}
+          </button>
+
+          {/* CAMERA */}
+
+          <button
+            type="button"
+            onClick={toggleVideo}
+            title={
+              isVideoMuted
+                ? "Turn camera on"
+                : "Turn camera off"
             }
-            aria-label="Camera"
+            className={`w-11 h-11 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center transition ${
+              isVideoMuted
+                ? "bg-rose-500 text-white shadow-lg shadow-rose-500/20"
+                : isDark
+                ? "bg-white/[0.06] text-white hover:bg-white/[0.1]"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+            }`}
           >
-            <CameraIcon />
+            {isVideoMuted ? (
+              <VideoOff className="w-4.5 h-4.5" />
+            ) : (
+              <Video className="w-4.5 h-4.5" />
+            )}
           </button>
 
+          {/* SCREEN SHARE */}
+
+          <button
+            type="button"
+            onClick={toggleScreenShare}
+            title="Share screen"
+            className={`hidden sm:flex w-11 h-11 md:w-12 md:h-12 rounded-xl md:rounded-2xl items-center justify-center transition ${
+              isScreenSharing
+                ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+                : isDark
+                ? "bg-white/[0.06] text-white hover:bg-white/[0.1]"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+            }`}
+          >
+            <MonitorUp className="w-4.5 h-4.5" />
+          </button>
+
+          {/* RAISE HAND */}
+
+          <button
+            type="button"
+            onClick={toggleHandRaise}
+            title="Raise hand"
+            className={`hidden sm:flex w-11 h-11 md:w-12 md:h-12 rounded-xl md:rounded-2xl items-center justify-center transition ${
+              isHandRaised
+                ? "bg-amber-400 text-black shadow-lg shadow-amber-400/20"
+                : isDark
+                ? "bg-white/[0.06] text-white hover:bg-white/[0.1]"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+            }`}
+          >
+            <Hand className="w-4.5 h-4.5" />
+          </button>
+
+          <div
+            className={`hidden md:block w-px h-8 mx-1 ${
+              isDark
+                ? "bg-white/10"
+                : "bg-slate-200"
+            }`}
+          />
+
+          {/* LEAVE */}
+
+          <button
+            type="button"
+            onClick={handleLeaveMeeting}
+            title="Leave meeting"
+            className="h-11 md:h-12 px-4 md:px-5 rounded-xl md:rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs flex items-center gap-2 transition shadow-lg shadow-rose-500/20"
+          >
+            <PhoneOff className="w-4 h-4" />
+
+            <span className="hidden sm:inline">
+              Leave
+            </span>
+          </button>
+
+          <div
+            className={`hidden md:block w-px h-8 mx-1 ${
+              isDark
+                ? "bg-white/10"
+                : "bg-slate-200"
+            }`}
+          />
+
+          {/* CHAT */}
+
+          <button
+            type="button"
+            onClick={() =>
+              setSidePanel(
+                activeSidePanel === "chat"
+                  ? "none"
+                  : "chat"
+              )
+            }
+            title="Chat"
+            className={`w-11 h-11 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center transition ${
+              activeSidePanel === "chat"
+                ? "bg-emerald-500/10 text-emerald-600"
+                : isDark
+                ? "text-slate-300 hover:bg-white/[0.06]"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            <MessageSquare className="w-4.5 h-4.5" />
+          </button>
+
+          {/* PARTICIPANTS */}
+
+          <button
+            type="button"
+            onClick={() =>
+              setSidePanel(
+                activeSidePanel === "participants"
+                  ? "none"
+                  : "participants"
+              )
+            }
+            title="Participants"
+            className={`w-11 h-11 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center transition ${
+              activeSidePanel === "participants"
+                ? "bg-emerald-500/10 text-emerald-600"
+                : isDark
+                ? "text-slate-300 hover:bg-white/[0.06]"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            <Users className="w-4.5 h-4.5" />
+          </button>
+
+          {/* AI */}
+
+          <button
+            type="button"
+            onClick={() =>
+              setSidePanel(
+                activeSidePanel === "ai_copilot"
+                  ? "none"
+                  : "ai_copilot"
+              )
+            }
+            title="AI Copilot"
+            className={`hidden sm:flex w-11 h-11 md:w-12 md:h-12 rounded-xl md:rounded-2xl items-center justify-center transition ${
+              activeSidePanel === "ai_copilot"
+                ? "bg-violet-500/10 text-violet-600"
+                : isDark
+                ? "text-slate-300 hover:bg-white/[0.06]"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            <Sparkles className="w-4.5 h-4.5" />
+          </button>
+
+          {/* PROCTORING */}
+
+          <button
+            type="button"
+            onClick={() =>
+              setSidePanel(
+                activeSidePanel === "proctoring"
+                  ? "none"
+                  : "proctoring"
+              )
+            }
+            title="Proctoring"
+            className={`hidden lg:flex w-11 h-11 md:w-12 md:h-12 rounded-xl md:rounded-2xl items-center justify-center transition ${
+              activeSidePanel === "proctoring"
+                ? "bg-amber-500/10 text-amber-600"
+                : isDark
+                ? "text-slate-300 hover:bg-white/[0.06]"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            <ShieldAlert className="w-4.5 h-4.5" />
+          </button>
         </div>
-
-        {/* Center */}
-
-        <div className="footer-center">
-
-          <button
-            type="button"
-            className="footer-large"
-          >
-            <ScreenIcon />
-            <span>Share Screen</span>
-          </button>
-
-          <button
-            type="button"
-            className="footer-large"
-          >
-            <RecordIcon />
-            <span>Record</span>
-          </button>
-
-          <button
-            type="button"
-            className="footer-small"
-          >
-            <KeyboardIcon />
-          </button>
-
-          <button
-            type="button"
-            className="leave-button"
-            onClick={leaveMeeting}
-          >
-            <span>⌁</span>
-            Leave
-          </button>
-
-        </div>
-
-        {/* Right */}
-
-        <div className="footer-right">
-
-          <button
-            type="button"
-            className="footer-small"
-          >
-            <MoonIcon />
-          </button>
-
-          <button
-            type="button"
-            className="footer-small"
-          >
-            <SettingsIcon />
-          </button>
-
-        </div>
-
-      </footer>
-
-    </main>
+      </div>
+    </div>
   );
 }
