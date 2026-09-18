@@ -52,7 +52,7 @@ const codingRooms: CodingRoom[] = [
 
 const quickActions = [
   {
-    title: "Start Coding",
+    title: "Start Meeting",
     description: "Create a collaborative coding room",
     icon: "</>",
     className: "primary",
@@ -125,8 +125,6 @@ export default function CodingDashboardPage() {
       title="Welcome back, Developer"
       subtitle="Build, code and collaborate with your team in real time."
     >
-      {/* CODING HERO */}
-
       <section className="coding-welcome-card">
         <div className="coding-welcome-content">
           <span className="coding-welcome-label">
@@ -166,8 +164,6 @@ export default function CodingDashboardPage() {
           </div>
         </div>
       </section>
-
-      {/* STATS */}
 
       <section className="dashboard-stats coding-stats">
         <div className="dashboard-stat-card">
@@ -227,8 +223,6 @@ export default function CodingDashboardPage() {
         </div>
       </section>
 
-      {/* QUICK ACTIONS */}
-
       <section>
         <div className="dashboard-section-heading">
           <div>
@@ -247,8 +241,12 @@ export default function CodingDashboardPage() {
               className={`dashboard-action coding-action ${action.className}`}
               key={action.title}
               onClick={() => {
-                if (action.title === "Start Coding") {
-                  router.push("/meeting/create");
+                if (action.title === "Start Meeting") {
+                  router.push("/meeting/create?mode=coding");
+                }
+
+                if (action.title === "Join Code Room") {
+                  router.push("/meeting/join?mode=coding");
                 }
               }}
             >
@@ -271,8 +269,6 @@ export default function CodingDashboardPage() {
           ))}
         </div>
       </section>
-
-      {/* CODE ROOMS */}
 
       <section className="dashboard-meetings-section">
         <div className="dashboard-section-heading">
