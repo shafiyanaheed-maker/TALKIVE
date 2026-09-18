@@ -11,31 +11,41 @@ import {
   Hand,
   MessageSquare,
   Users,
-  Code2,
   Sparkles,
   ShieldAlert,
   PhoneOff,
   Copy,
   Check,
-  EyeOff,
   Send,
-  Lock,
-  Play,
+  Sun,
+  Moon,
+  MoreHorizontal,
+  Settings,
+  Pin,
+  Maximize2,
+  Volume2,
+  X,
+  Search,
+  FileText,
+  Clock3,
+  Wifi,
+  ChevronDown,
 } from "lucide-react";
-import { useMeetingStore, type SidePanelType } from "@/stores/meetingStore";
-import { TalkiveApiClient } from "@/lib/api";
-import type { MeetingDetails, ChatMessagePayload, SupportedCodeLanguage } from "@talkive/types";
 
-export default function RoomPage({ params }: { params: Promise<{ code: string }> }) {
+import { useMeetingStore } from "@/stores/meetingStore";
+import type { ChatMessagePayload } from "@talkive/types";
+
+export default function RoomPage({
+  params,
+}: {
+  params: Promise<{ code: string }>;
+}) {
   const resolvedParams = use(params);
-  const roomCode = resolvedParams.code.toLowerCase();
+  const roomCode = resolvedParams.code.toUpperCase();
+
   const router = useRouter();
 
-  // Store state
   const {
-    isConnected,
-    isConnecting,
-    error,
     meeting,
     currentUser,
     isAudioMuted,
@@ -44,671 +54,1615 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
     isHandRaised,
     activeSidePanel,
     chatMessages,
-    activeCaptions,
-    setConnectionState,
-    setMeeting,
     toggleAudio,
     toggleVideo,
     toggleScreenShare,
     toggleHandRaise,
     setSidePanel,
     addChatMessage,
-    addCaption,
     reset,
   } = useMeetingStore();
 
-  // Local pre-join states
-  const [hasJoined, setHasJoined] = useState(false);
-  const [displayName, setDisplayName] = useState("");
-  const [passcode, setPasscode] = useState("");
-  const [isGhostRequested, setIsGhostRequested] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [chatInput, setChatInput] = useState("");
-
-  // Media references
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const localMediaStreamRef = useRef<MediaStream | null>(null);
 
-  // Dual-editor local states
-  const [leftCode, setLeftCode] = useState(`// Teacher Reference / Problem Description\nfunction binarySearch(arr: number[], target: number): number {\n  let left = 0, right = arr.length - 1;\n  while (left <= right) {\n    const mid = Math.floor((left + right) / 2);\n    if (arr[mid] === target) return mid;\n    if (arr[mid] < target) left = mid + 1;\n    else right = mid - 1;\n  }\n  return -1;\n}`);
-  const [rightCode, setRightCode] = useState(`// Student Working Solution\nfunction binarySearch(arr, target) {\n  // Implement your solution here\n}`);
-  const [selectedLang, setSelectedLang] = useState<SupportedCodeLanguage>("typescript");
-  const [codeOutput, setCodeOutput] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const [isDark, setIsDark] = useState(true);
+  const [showMore, setShowMore] = useState(false);
+  const [meetingSeconds, setMeetingSeconds] = useState(0);
 
-  // Acquire pre-join camera/mic
+  const [liveCaption, setLiveCaption] = useState(
+    "Listening for your voice..."
+  );
+
+  const [isCaptionListening, setIsCaptionListening] =
+    useState(false);
+
+  /*
+   * =========================================================
+   * THEME
+   * =========================================================
+   */
+
+  useEffect(() => {
+    const savedTheme = window.localStorage.getItem(
+      "talkive-meeting-theme"
+    );
+
+    if (savedTheme === "light") {
+      setIsDark(false);
+    } else {
+      setIsDark(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle(
+      "dark",
+      isDark
+    );
+
+    window.localStorage.setItem(
+      "talkive-meeting-theme",
+      isDark ? "dark" : "light"
+    );
+  }, [isDark]);
+
+  /*
+   * =========================================================
+   * MEETING TIMER
+   * =========================================================
+   */
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setMeetingSeconds((value) => value + 1);
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
+  function formatMeetingTime(totalSeconds: number) {
+    const hours = Math.floor(totalSeconds / 3600);
+
+    const minutes = Math.floor(
+      (totalSeconds % 3600) / 60
+    );
+
+    const seconds = totalSeconds % 60;
+
+    if (hours > 0) {
+      return `${String(hours).padStart(2, "0")}:${String(
+        minutes
+      ).padStart(2, "0")}:${String(seconds).padStart(
+        2,
+        "0"
+      )}`;
+    }
+
+    return `${String(minutes).padStart(2, "0")}:${String(
+      seconds
+    ).padStart(2, "0")}`;
+  }
+
+  /*
+   * =========================================================
+   * CAMERA + MICROPHONE
+   * =========================================================
+   */
+
   useEffect(() => {
     let stream: MediaStream | null = null;
-    async function initPreview() {
+    let cancelled = false;
+
+    async function startMedia() {
       try {
+        if (
+          !navigator.mediaDevices ||
+          !navigator.mediaDevices.getUserMedia
+        ) {
+          return;
+        }
+
         stream = await navigator.mediaDevices.getUserMedia({
           video: true,
           audio: true,
         });
+
+        if (cancelled) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+
         localMediaStreamRef.current = stream;
+
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = stream;
         }
-      } catch (err) {
-        console.warn("Media device access note:", err);
+      } catch (error) {
+        console.warn(
+          "Camera/microphone permission was not granted:",
+          error
+        );
       }
     }
-    if (!hasJoined) {
-      initPreview();
-    }
+
+    startMedia();
+
     return () => {
+      cancelled = true;
+
       if (stream) {
-        stream.getTracks().forEach((t) => t.stop());
+        stream.getTracks().forEach((track) => track.stop());
+      }
+
+      localMediaStreamRef.current = null;
+    };
+  }, []);
+
+  /*
+   * =========================================================
+   * SYNC CAMERA STATE
+   * =========================================================
+   */
+
+  useEffect(() => {
+    const stream = localMediaStreamRef.current;
+
+    if (!stream) {
+      return;
+    }
+
+    stream
+      .getVideoTracks()
+      .forEach((track) => {
+        track.enabled = !isVideoMuted;
+      });
+  }, [isVideoMuted]);
+
+  /*
+   * =========================================================
+   * SYNC MICROPHONE STATE
+   * =========================================================
+   */
+
+  useEffect(() => {
+    const stream = localMediaStreamRef.current;
+
+    if (!stream) {
+      return;
+    }
+
+    stream
+      .getAudioTracks()
+      .forEach((track) => {
+        track.enabled = !isAudioMuted;
+      });
+  }, [isAudioMuted]);
+
+  /*
+   * =========================================================
+   * LIVE AI CAPTIONS
+   * =========================================================
+   */
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setLiveCaption(
+        "Live captions are not supported in this browser."
+      );
+
+      setIsCaptionListening(false);
+
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+
+    let stopped = false;
+
+    recognition.onstart = () => {
+      if (!stopped) {
+        setIsCaptionListening(true);
       }
     };
-  }, [hasJoined]);
 
-  // Handle Joining
-  const handleJoin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!displayName.trim()) return;
+    recognition.onresult = (event: any) => {
+      let transcript = "";
 
-    setConnectionState(true, false, null);
+      for (
+        let i = event.resultIndex;
+        i < event.results.length;
+        i++
+      ) {
+        transcript += event.results[i][0].transcript;
+      }
+
+      const cleanedTranscript = transcript.trim();
+
+      if (cleanedTranscript) {
+        setLiveCaption(cleanedTranscript);
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      console.warn(
+        "Speech recognition error:",
+        event?.error
+      );
+
+      if (event?.error === "not-allowed") {
+        setLiveCaption(
+          "Microphone permission is required for live captions."
+        );
+      } else if (event?.error === "audio-capture") {
+        setLiveCaption(
+          "Microphone is unavailable for live captions."
+        );
+      } else if (event?.error === "network") {
+        setLiveCaption(
+          "Caption connection interrupted. Trying again..."
+        );
+      }
+
+      setIsCaptionListening(false);
+    };
+
+    recognition.onend = () => {
+      if (stopped) {
+        return;
+      }
+
+      setIsCaptionListening(false);
+
+      window.setTimeout(() => {
+        if (stopped) {
+          return;
+        }
+
+        try {
+          recognition.start();
+        } catch {
+          // Recognition may already be starting.
+        }
+      }, 300);
+    };
 
     try {
-      const session = await TalkiveApiClient.joinMeeting(roomCode, {
-        roomCode,
-        displayName: displayName.trim(),
-        passcode: passcode || undefined,
-        isGhostRequested,
-      });
-
-      setMeeting(session.meeting, session.participant);
-      setConnectionState(false, true, null);
-      setHasJoined(true);
-
-      // Add a welcome system chat message
-      addChatMessage({
-        id: `sys_${Date.now()}`,
-        senderId: "system",
-        senderName: "Talkive Concierge",
-        text: `Welcome to "${session.meeting.title}". You joined in ${session.meeting.mode.toUpperCase()} mode.`,
-        timestamp: Date.now(),
-      });
-    } catch (err: any) {
-      setConnectionState(false, false, err.message || "Failed to join room");
+      recognition.start();
+    } catch (error) {
+      console.warn(
+        "Could not start speech recognition:",
+        error
+      );
     }
-  };
 
-  // Copy meeting link
-  const copyMeetingLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+    return () => {
+      stopped = true;
 
-  // Send Chat message
-  const handleSendChat = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim() || !currentUser) return;
+      recognition.onstart = null;
+      recognition.onresult = null;
+      recognition.onerror = null;
+      recognition.onend = null;
 
-    const newMsg: ChatMessagePayload = {
-      id: `msg_${Date.now()}`,
-      senderId: currentUser.id,
-      senderName: currentUser.name,
+      try {
+        recognition.stop();
+      } catch {
+        // Recognition may already be stopped.
+      }
+
+      setIsCaptionListening(false);
+    };
+  }, []);
+
+  /*
+   * =========================================================
+   * COPY LINK
+   * =========================================================
+   */
+
+  async function copyMeetingLink() {
+    try {
+      await navigator.clipboard.writeText(
+        window.location.href
+      );
+
+      setCopied(true);
+
+      window.setTimeout(() => {
+        setCopied(false);
+      }, 2000);
+    } catch (error) {
+      console.warn(
+        "Could not copy meeting link:",
+        error
+      );
+    }
+  }
+
+  /*
+   * =========================================================
+   * CHAT
+   * =========================================================
+   */
+
+  function handleSendChat(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
+    if (!chatInput.trim()) {
+      return;
+    }
+
+    const message: ChatMessagePayload = {
+      id: `message_${Date.now()}`,
+      senderId: currentUser?.id || "local-user",
+      senderName: currentUser?.name || "You",
       text: chatInput.trim(),
       timestamp: Date.now(),
     };
 
-    addChatMessage(newMsg);
+    addChatMessage(message);
     setChatInput("");
-  };
-
-  // Run Code simulation in Dual Editor
-  const handleRunCode = () => {
-    setCodeOutput("Compiling & executing TypeScript in secure sandbox...\n> Running tests against target...\n[PASS] Test 1: Element in middle (found index 2)\n[PASS] Test 2: Element not in array (returned -1)\nExecution finished in 48ms (Exit Code 0)");
-  };
-
-  // Exit Meeting
-  const handleLeaveMeeting = () => {
-    if (localMediaStreamRef.current) {
-      localMediaStreamRef.current.getTracks().forEach((t) => t.stop());
-    }
-    reset();
-    router.push("/");
-  };
-
-  // 1. PRE-JOIN LOBBY SCREEN
-  if (!hasJoined) {
-    return (
-      <div className="min-h-screen bg-[#080c14] text-slate-100 flex flex-col items-center justify-center p-6">
-        <div className="w-full max-w-4xl grid md:grid-cols-2 gap-8 items-center">
-          {/* Video Preview Box */}
-          <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-900 border border-slate-800 shadow-2xl flex items-center justify-center">
-            <video
-              ref={localVideoRef}
-              autoPlay
-              playsInline
-              muted
-              className="w-full h-full object-cover mirror -scale-x-100"
-            />
-            <div className="absolute bottom-4 inset-x-0 flex items-center justify-center gap-4">
-              <button
-                type="button"
-                onClick={toggleAudio}
-                className={`p-3 rounded-full backdrop-blur-md transition ${
-                  isAudioMuted
-                    ? "bg-rose-600 text-white"
-                    : "bg-slate-800/80 text-slate-200 hover:bg-slate-700"
-                }`}
-              >
-                {isAudioMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-              </button>
-              <button
-                type="button"
-                onClick={toggleVideo}
-                className={`p-3 rounded-full backdrop-blur-md transition ${
-                  isVideoMuted
-                    ? "bg-rose-600 text-white"
-                    : "bg-slate-800/80 text-slate-200 hover:bg-slate-700"
-                }`}
-              >
-                {isVideoMuted ? <VideoOff className="w-5 h-5" /> : <Video className="w-5 h-5" />}
-              </button>
-            </div>
-            <div className="absolute top-4 left-4 px-2.5 py-1 rounded-md bg-black/60 backdrop-blur text-xs font-mono text-slate-300">
-              Room: {roomCode}
-            </div>
-          </div>
-
-          {/* Join Form */}
-          <div className="space-y-6 bg-[#0f1626] border border-slate-800 rounded-2xl p-6 sm:p-8">
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight text-white">
-                Ready to Join?
-              </h2>
-              <p className="text-xs text-slate-400 mt-1">
-                Configure your media and identity before stepping into the room.
-              </p>
-            </div>
-
-            {error && (
-              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleJoin} className="space-y-4">
-              <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1">
-                  Your Full Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Alex Morgan"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-lg bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:border-emerald-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1">
-                  Passcode (if required)
-                </label>
-                <input
-                  type="password"
-                  placeholder="Optional room passcode"
-                  value={passcode}
-                  onChange={(e) => setPasscode(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm focus:outline-none focus:border-emerald-500"
-                />
-              </div>
-
-              {/* Ghost Mode Option */}
-              <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
-                    <EyeOff className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="text-xs font-semibold block text-slate-200">
-                      Ghost Mode (Supervisor)
-                    </span>
-                    <span className="text-[11px] text-slate-400 block">
-                      Join invisibly without broadcasting to participants
-                    </span>
-                  </div>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={isGhostRequested}
-                  onChange={(e) => setIsGhostRequested(e.target.checked)}
-                  className="w-4 h-4 accent-emerald-500 cursor-pointer rounded"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={isConnecting || !displayName.trim()}
-                className="w-full py-3 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 transition disabled:opacity-50"
-              >
-                {isConnecting ? "Connecting to Media SFU..." : "Join Meeting Now"}
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    );
   }
 
-  // 2. ACTIVE REAL-TIME IN-MEETING SCREEN
-  return (
-    <div className="h-screen w-screen bg-[#070b12] text-slate-100 flex flex-col overflow-hidden">
-      {/* Top Header */}
-      <header className="h-14 border-b border-slate-800/80 bg-[#0c121e]/90 backdrop-blur px-6 flex items-center justify-between z-20">
-        <div className="flex items-center gap-4">
-          <span className="font-bold text-sm tracking-tight text-white">
-            {meeting?.title || "Talkive Meeting"}
-          </span>
+  /*
+   * =========================================================
+   * LEAVE
+   * =========================================================
+   */
 
-          <div className="flex items-center gap-1.5 bg-slate-900/90 border border-slate-700/60 px-2.5 py-1 rounded-md text-xs font-mono text-slate-300">
-            <span>{roomCode}</span>
-            <button
-              onClick={copyMeetingLink}
-              title="Copy meeting link"
-              className="text-slate-400 hover:text-white transition ml-1"
-            >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-            </button>
+  function handleLeaveMeeting() {
+    if (localMediaStreamRef.current) {
+      localMediaStreamRef.current
+        .getTracks()
+        .forEach((track) => track.stop());
+    }
+
+    localMediaStreamRef.current = null;
+
+    reset();
+
+    router.push("/dashboard/business");
+  }
+
+  /*
+   * =========================================================
+   * HELPERS
+   * =========================================================
+   */
+
+  function initials(name?: string) {
+    if (!name) {
+      return "Y";
+    }
+
+    return name
+      .split(" ")
+      .map((part) => part.charAt(0))
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+  }
+
+  const background = isDark
+    ? "bg-[#070b12]"
+    : "bg-[#f4f7fb]";
+
+  const headerBackground = isDark
+    ? "bg-[#0b111c]/95"
+    : "bg-white/95";
+
+  const cardBackground = isDark
+    ? "bg-[#101827]"
+    : "bg-white";
+
+  const secondaryBackground = isDark
+    ? "bg-[#0d1523]"
+    : "bg-[#eef3f8]";
+
+  const borderColor = isDark
+    ? "border-white/[0.07]"
+    : "border-slate-200";
+
+  const primaryText = isDark
+    ? "text-white"
+    : "text-slate-900";
+
+  const secondaryText = isDark
+    ? "text-slate-400"
+    : "text-slate-500";
+
+  /*
+   * =========================================================
+   * UI
+   * =========================================================
+   */
+
+  return (
+    <div
+      className={`h-screen w-screen overflow-hidden ${background} ${primaryText} transition-colors duration-300`}
+    >
+      {/* =====================================================
+          HEADER
+          ===================================================== */}
+
+      <header
+        className={`h-[68px] flex-shrink-0 ${headerBackground} backdrop-blur-xl border-b ${borderColor} px-4 md:px-6 flex items-center justify-between`}
+      >
+        {/* LEFT */}
+
+        <div className="flex items-center gap-3 min-w-0">
+          {/* LOGO */}
+
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+              <span className="text-white font-black text-xs">
+                T
+              </span>
+            </div>
+
+            <span className="hidden sm:block font-extrabold tracking-tight text-sm">
+              TALKIVE
+            </span>
           </div>
 
-          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-            {meeting?.mode || "General"} Mode
-          </span>
+          <div
+            className={`hidden sm:block h-6 w-px ${
+              isDark
+                ? "bg-white/10"
+                : "bg-slate-200"
+            }`}
+          />
 
-          {(currentUser?.role === "ghost" || currentUser?.permissions.isGhost) && (
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 flex items-center gap-1">
-              <EyeOff className="w-3 h-3" /> Ghost Mode Active
-            </span>
-          )}
+          {/* MEETING */}
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-sm truncate max-w-[180px] md:max-w-[300px]">
+                {meeting?.title || "Business Meeting"}
+              </span>
+
+              <span className="hidden md:inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Business
+              </span>
+            </div>
+
+            <div
+              className={`flex items-center gap-2 text-[10px] ${secondaryText} mt-0.5`}
+            >
+              <span className="font-mono">
+                {roomCode}
+              </span>
+
+              <button
+                type="button"
+                onClick={copyMeetingLink}
+                className="hover:text-emerald-500 transition"
+                title="Copy meeting link"
+              >
+                {copied ? (
+                  <Check className="w-3 h-3 text-emerald-500" />
+                ) : (
+                  <Copy className="w-3 h-3" />
+                )}
+              </button>
+
+              <span className="opacity-40">•</span>
+
+              <Clock3 className="w-3 h-3" />
+
+              <span className="font-mono">
+                {formatMeetingTime(meetingSeconds)}
+              </span>
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3 text-xs text-slate-400">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>SFU LiveKit Connected</span>
+        {/* RIGHT */}
+
+        <div className="flex items-center gap-2">
+          {/* CONNECTION */}
+
+          <div
+            className={`hidden lg:flex items-center gap-2 px-3 py-2 rounded-xl ${
+              isDark
+                ? "bg-white/[0.04]"
+                : "bg-slate-100"
+            }`}
+          >
+            <Wifi className="w-3.5 h-3.5 text-emerald-500" />
+
+            <span
+              className={`text-[11px] font-medium ${secondaryText}`}
+            >
+              Good connection
+            </span>
+
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
           </div>
+
+          {/* THEME */}
+
+          <button
+            type="button"
+            onClick={() => setIsDark((value) => !value)}
+            title={
+              isDark
+                ? "Switch to light mode"
+                : "Switch to dark mode"
+            }
+            className={`w-10 h-10 rounded-xl flex items-center justify-center transition ${
+              isDark
+                ? "bg-white/[0.05] hover:bg-white/[0.09] text-slate-300"
+                : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+            }`}
+          >
+            {isDark ? (
+              <Sun className="w-4 h-4" />
+            ) : (
+              <Moon className="w-4 h-4" />
+            )}
+          </button>
+
+          {/* MORE */}
+
+          <button
+            type="button"
+            onClick={() =>
+              setShowMore((value) => !value)
+            }
+            className={`w-10 h-10 rounded-xl flex items-center justify-center transition ${
+              isDark
+                ? "hover:bg-white/[0.05]"
+                : "hover:bg-slate-100"
+            } ${secondaryText}`}
+          >
+            <MoreHorizontal className="w-5 h-5" />
+          </button>
+
+          {showMore && (
+            <div
+              className={`absolute top-[60px] right-4 z-50 w-52 rounded-2xl border ${borderColor} ${cardBackground} shadow-2xl p-2`}
+            >
+              <button
+                type="button"
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs ${secondaryText} hover:bg-emerald-500/10 hover:text-emerald-500`}
+              >
+                <Settings className="w-4 h-4" />
+                Meeting settings
+              </button>
+
+              <button
+                type="button"
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs ${secondaryText} hover:bg-emerald-500/10 hover:text-emerald-500`}
+              >
+                <FileText className="w-4 h-4" />
+                Meeting details
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
-      {/* Main Stage / Video Canvas & Side Drawer */}
-      <div className="flex-1 flex overflow-hidden relative">
-        {/* Stage Content */}
-        <div className="flex-1 flex flex-col p-4 relative overflow-hidden">
-          {/* Main Grid View */}
-          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 items-center justify-center max-w-6xl mx-auto w-full">
-            {/* Local Video Tile */}
-            <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-900 border border-slate-800 shadow-xl flex items-center justify-center group">
-              <video
-                ref={localVideoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-cover -scale-x-100"
-              />
-              <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-md bg-black/60 backdrop-blur text-xs font-medium text-slate-200 flex items-center gap-2">
-                <span>{currentUser?.name} (You)</span>
-                {isAudioMuted && <MicOff className="w-3.5 h-3.5 text-rose-400" />}
-              </div>
-              {isHandRaised && (
-                <div className="absolute top-3 right-3 p-1.5 rounded-lg bg-amber-500 text-black shadow-lg">
-                  <Hand className="w-4 h-4 fill-current" />
-                </div>
-              )}
-            </div>
+      {/* =====================================================
+          MAIN
+          ===================================================== */}
 
-            {/* Remote Simulation Tile (Peer / Student / Instructor) */}
-            <div className="relative aspect-video rounded-2xl overflow-hidden bg-[#0d1424] border border-slate-800 shadow-xl flex flex-col items-center justify-center">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-teal-500 to-emerald-400 text-slate-950 font-extrabold text-2xl flex items-center justify-center shadow-lg">
-                TM
-              </div>
-              <span className="text-sm font-semibold text-slate-300 mt-3">
-                Prof. Tara Miller (Instructor)
-              </span>
-              <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-md bg-black/60 backdrop-blur text-xs font-medium text-slate-300 flex items-center gap-2">
-                <span>Tara Miller</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              </div>
-            </div>
+      <main className="h-[calc(100vh-68px)] flex overflow-hidden">
+        {/* ===================================================
+            VIDEO WORKSPACE
+            =================================================== */}
+
+        <section className="relative flex-1 min-w-0 flex flex-col p-3 md:p-5 overflow-hidden">
+          {/* SOFT EMERALD AMBIENT BACKGROUND */}
+
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div
+              className={`absolute left-[8%] top-[8%] w-[42%] h-[55%] rounded-full blur-[110px] ${
+                isDark
+                  ? "bg-emerald-500/[0.10]"
+                  : "bg-emerald-400/[0.16]"
+              }`}
+            />
+
+            <div
+              className={`absolute right-[8%] top-[10%] w-[42%] h-[55%] rounded-full blur-[110px] ${
+                isDark
+                  ? "bg-emerald-500/[0.08]"
+                  : "bg-emerald-300/[0.13]"
+              }`}
+            />
+
+            <div
+              className={`absolute left-[25%] bottom-[2%] w-[50%] h-[25%] rounded-full blur-[100px] ${
+                isDark
+                  ? "bg-emerald-600/[0.06]"
+                  : "bg-emerald-400/[0.08]"
+              }`}
+            />
           </div>
 
-          {/* Real-Time Live Captions Overlay */}
-          <div className="h-12 mt-2 px-4 rounded-xl bg-black/70 backdrop-blur border border-slate-800/80 flex items-center justify-center text-center text-xs text-slate-200">
-            <span className="text-emerald-400 font-semibold mr-2">[AI Captions]</span>
-            <span>
-              &ldquo;Welcome to the advanced paired architecture session. Let&apos;s open the dual code editor to verify the search algorithm.&rdquo;
-            </span>
-          </div>
-        </div>
+          {/* VIDEO GRID */}
 
-        {/* Dynamic Side Drawer (Chat, Dual-Code Editor, Participants, AI Copilot) */}
-        {activeSidePanel !== "none" && (
-          <aside className="w-96 border-l border-slate-800 bg-[#0c121e] flex flex-col z-30 transition-all">
-            {/* Drawer Header */}
-            <div className="h-12 border-b border-slate-800 px-4 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-300">
-              <span className="flex items-center gap-2">
-                {activeSidePanel === "chat" && <><MessageSquare className="w-4 h-4 text-emerald-400" /> Real-Time Chat</>}
-                {activeSidePanel === "dual_editor" && <><Code2 className="w-4 h-4 text-teal-400" /> Dual-Code Editor</>}
-                {activeSidePanel === "participants" && <><Users className="w-4 h-4 text-indigo-400" /> Participants (2)</>}
-                {activeSidePanel === "ai_copilot" && <><Sparkles className="w-4 h-4 text-rose-400" /> AI Meeting Copilot</>}
-                {activeSidePanel === "proctoring" && <><ShieldAlert className="w-4 h-4 text-amber-400" /> Proctoring Monitor</>}
-              </span>
-              <button
-                onClick={() => setSidePanel("none")}
-                className="text-slate-400 hover:text-white p-1"
+          <div className="relative z-10 flex-1 min-h-0 max-w-[1500px] w-full mx-auto">
+            <div className="h-full grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
+              {/* =================================================
+                  LOCAL VIDEO
+                  ================================================= */}
+
+              <div
+                className={`relative min-h-[280px] rounded-2xl md:rounded-3xl overflow-hidden ${
+                  isDark
+                    ? "bg-[#111722]"
+                    : "bg-slate-200"
+                } border ${borderColor} shadow-2xl group`}
               >
-                &times;
+                {/* VIDEO */}
+
+                <video
+                  ref={localVideoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className={`w-full h-full object-cover transition ${
+                    isVideoMuted
+                      ? "opacity-0"
+                      : "opacity-100"
+                  }`}
+                  style={{
+                    transform: "scaleX(-1)",
+                  }}
+                />
+
+                {/* CAMERA OFF */}
+
+                {isVideoMuted && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white text-2xl font-extrabold shadow-xl shadow-emerald-500/20">
+                      {initials(currentUser?.name)}
+                    </div>
+
+                    <p
+                      className={`mt-4 text-sm font-semibold ${
+                        isDark
+                          ? "text-white"
+                          : "text-slate-800"
+                      }`}
+                    >
+                      Camera is off
+                    </p>
+
+                    <p
+                      className={`text-xs mt-1 ${secondaryText}`}
+                    >
+                      Turn your camera on to share video
+                    </p>
+                  </div>
+                )}
+
+                {/* GRADIENT */}
+
+                <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/70 to-transparent pointer-events-none" />
+
+                {/* NAME */}
+
+                <div className="absolute bottom-4 left-4 flex items-center gap-2">
+                  <div className="px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-md text-xs font-medium text-white">
+                    {currentUser?.name || "You"}
+
+                    <span className="text-white/50 ml-1">
+                      (You)
+                    </span>
+                  </div>
+
+                  {isAudioMuted && (
+                    <div className="w-8 h-8 rounded-lg bg-black/60 backdrop-blur-md flex items-center justify-center">
+                      <MicOff className="w-3.5 h-3.5 text-rose-400" />
+                    </div>
+                  )}
+                </div>
+
+                {/* TOP ACTIONS */}
+
+                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                  <button
+                    type="button"
+                    className="w-9 h-9 rounded-xl bg-black/50 backdrop-blur-md text-white flex items-center justify-center"
+                  >
+                    <Pin className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    className="w-9 h-9 rounded-xl bg-black/50 backdrop-blur-md text-white flex items-center justify-center"
+                  >
+                    <Maximize2 className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* HAND */}
+
+                {isHandRaised && (
+                  <div className="absolute top-4 left-4 w-10 h-10 rounded-xl bg-amber-400 text-black flex items-center justify-center shadow-lg">
+                    <Hand className="w-5 h-5" />
+                  </div>
+                )}
+              </div>
+
+              {/* =================================================
+                  HOST
+                  ================================================= */}
+
+              <div
+                className={`relative min-h-[280px] rounded-2xl md:rounded-3xl overflow-hidden ${
+                  isDark
+                    ? "bg-[#101827]"
+                    : "bg-white"
+                } border ${borderColor} shadow-2xl group flex items-center justify-center`}
+              >
+                {/* SUBTLE BACKGROUND */}
+
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.10),transparent_55%)]" />
+
+                <div className="relative flex flex-col items-center">
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white text-2xl font-extrabold shadow-xl shadow-emerald-500/20">
+                    TM
+                  </div>
+
+                  <span className="mt-4 text-sm font-bold">
+                    Prof. Tara Miller
+                  </span>
+
+                  <span
+                    className={`mt-1 text-xs ${secondaryText}`}
+                  >
+                    Instructor
+                  </span>
+
+                  <div className="mt-4 flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-[10px] font-bold uppercase tracking-wider">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    Host
+                  </div>
+                </div>
+
+                {/* BOTTOM */}
+
+                <div className="absolute bottom-4 left-4 flex items-center gap-2">
+                  <div className="px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-md text-xs font-medium text-white">
+                    Prof. Tara Miller
+                  </div>
+
+                  <div className="w-8 h-8 rounded-lg bg-black/60 backdrop-blur-md flex items-center justify-center">
+                    <Volume2 className="w-3.5 h-3.5 text-emerald-400" />
+                  </div>
+                </div>
+
+                {/* TOP RIGHT */}
+
+                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                  <button
+                    type="button"
+                    className="w-9 h-9 rounded-xl bg-black/50 backdrop-blur-md text-white flex items-center justify-center"
+                  >
+                    <Pin className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    className="w-9 h-9 rounded-xl bg-black/50 backdrop-blur-md text-white flex items-center justify-center"
+                  >
+                    <Maximize2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ===================================================
+              CAPTIONS
+              =================================================== */}
+
+          <div
+            className={`relative z-10 mt-3 md:mt-4 min-h-[54px] rounded-2xl border ${borderColor} ${
+              isDark
+                ? "bg-[#0b1019]/90"
+                : "bg-white"
+            } backdrop-blur-xl flex items-center justify-center px-5`}
+          >
+            <div className="flex items-center gap-3 text-xs text-center max-w-full">
+              <span className="flex-shrink-0 px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-600 border border-emerald-500/15 font-bold text-[10px] tracking-wide">
+                AI CAPTIONS
+              </span>
+
+              <span
+                className={`w-1.5 h-1.5 flex-shrink-0 rounded-full ${
+                  isCaptionListening
+                    ? "bg-emerald-500 animate-pulse"
+                    : "bg-slate-400"
+                }`}
+              />
+
+              <span
+                className={`${secondaryText} truncate`}
+              >
+                {liveCaption}
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* ===================================================
+            SIDE PANEL
+            =================================================== */}
+
+        {activeSidePanel !== "none" && (
+          <aside
+            className={`hidden md:flex w-[360px] xl:w-[400px] flex-shrink-0 border-l ${borderColor} ${cardBackground} flex-col`}
+          >
+            {/* PANEL HEADER */}
+
+            <div
+              className={`h-[68px] flex-shrink-0 border-b ${borderColor} px-5 flex items-center justify-between`}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-9 h-9 rounded-xl ${
+                    activeSidePanel === "chat"
+                      ? "bg-emerald-500/10 text-emerald-600"
+                      : activeSidePanel ===
+                        "participants"
+                      ? "bg-emerald-500/10 text-emerald-600"
+                      : activeSidePanel ===
+                        "ai_copilot"
+                      ? "bg-violet-500/10 text-violet-600"
+                      : "bg-amber-500/10 text-amber-600"
+                  } flex items-center justify-center`}
+                >
+                  {activeSidePanel === "chat" && (
+                    <MessageSquare className="w-4 h-4" />
+                  )}
+
+                  {activeSidePanel ===
+                    "participants" && (
+                    <Users className="w-4 h-4" />
+                  )}
+
+                  {activeSidePanel === "ai_copilot" && (
+                    <Sparkles className="w-4 h-4" />
+                  )}
+
+                  {activeSidePanel === "proctoring" && (
+                    <ShieldAlert className="w-4 h-4" />
+                  )}
+                </div>
+
+                <div>
+                  <h2 className="text-sm font-bold">
+                    {activeSidePanel === "chat" &&
+                      "Meeting Chat"}
+
+                    {activeSidePanel ===
+                      "participants" &&
+                      "Participants"}
+
+                    {activeSidePanel ===
+                      "ai_copilot" &&
+                      "AI Copilot"}
+
+                    {activeSidePanel ===
+                      "proctoring" &&
+                      "Proctoring"}
+                  </h2>
+
+                  <p
+                    className={`text-[10px] mt-0.5 ${secondaryText}`}
+                  >
+                    {activeSidePanel === "chat" &&
+                      "Communicate with your team"}
+
+                    {activeSidePanel ===
+                      "participants" &&
+                      "People in this meeting"}
+
+                    {activeSidePanel ===
+                      "ai_copilot" &&
+                      "Intelligent meeting assistance"}
+
+                    {activeSidePanel ===
+                      "proctoring" &&
+                      "Meeting security monitoring"}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSidePanel("none")}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center ${secondaryText} ${
+                  isDark
+                    ? "hover:bg-white/[0.05]"
+                    : "hover:bg-slate-100"
+                }`}
+              >
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Drawer Body */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
-              {/* 1. CHAT PANEL */}
-              {activeSidePanel === "chat" && (
-                <div className="h-full flex flex-col justify-between">
-                  <div className="space-y-3 overflow-y-auto">
-                    {chatMessages.map((msg) => (
-                      <div key={msg.id} className="space-y-1">
-                        <div className="flex items-center justify-between text-[11px] text-slate-400">
-                          <span className="font-semibold text-emerald-400">{msg.senderName}</span>
-                          <span>{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            {/* =================================================
+                CHAT
+                ================================================= */}
+
+            {activeSidePanel === "chat" && (
+              <div className="flex-1 flex flex-col min-h-0">
+                <div className="p-4">
+                  <div
+                    className={`h-10 rounded-xl border ${borderColor} ${
+                      isDark
+                        ? "bg-white/[0.03]"
+                        : "bg-slate-50"
+                    } flex items-center px-3 gap-2`}
+                  >
+                    <Search
+                      className={`w-4 h-4 ${secondaryText}`}
+                    />
+
+                    <input
+                      placeholder="Search messages..."
+                      className={`bg-transparent outline-none border-none text-xs flex-1 ${primaryText}`}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto px-4 space-y-4">
+                  {chatMessages.length === 0 && (
+                    <div className="h-full flex flex-col items-center justify-center text-center">
+                      <div
+                        className={`w-14 h-14 rounded-2xl ${
+                          isDark
+                            ? "bg-white/[0.04]"
+                            : "bg-slate-100"
+                        } flex items-center justify-center mb-4`}
+                      >
+                        <MessageSquare
+                          className={`w-6 h-6 ${secondaryText}`}
+                        />
+                      </div>
+
+                      <p className="text-sm font-semibold">
+                        No messages yet
+                      </p>
+
+                      <p
+                        className={`text-xs ${secondaryText} mt-1 max-w-[220px]`}
+                      >
+                        Start the conversation with your
+                        team.
+                      </p>
+                    </div>
+                  )}
+
+                  {chatMessages.map((message) => (
+                    <div
+                      key={message.id}
+                      className="space-y-1"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 text-white flex items-center justify-center text-[9px] font-bold">
+                          {initials(message.senderName)}
                         </div>
-                        <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-200">
-                          {msg.text}
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[11px] font-semibold truncate">
+                              {message.senderName}
+                            </span>
+
+                            <span
+                              className={`text-[9px] ${secondaryText}`}
+                            >
+                              {new Date(
+                                message.timestamp
+                              ).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div
+                        className={`ml-9 p-3 rounded-xl text-xs ${
+                          isDark
+                            ? "bg-white/[0.04]"
+                            : "bg-slate-50"
+                        }`}
+                      >
+                        {message.text}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <form
+                  onSubmit={handleSendChat}
+                  className={`p-4 border-t ${borderColor}`}
+                >
+                  <div
+                    className={`flex items-center gap-2 p-1.5 rounded-xl border ${borderColor} ${
+                      isDark
+                        ? "bg-white/[0.03]"
+                        : "bg-slate-50"
+                    }`}
+                  >
+                    <input
+                      value={chatInput}
+                      onChange={(event) =>
+                        setChatInput(event.target.value)
+                      }
+                      placeholder="Write a message..."
+                      className={`flex-1 bg-transparent outline-none px-2 text-xs ${primaryText}`}
+                    />
+
+                    <button
+                      type="submit"
+                      className="w-9 h-9 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20"
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* =================================================
+                PARTICIPANTS
+                ================================================= */}
+
+            {activeSidePanel === "participants" && (
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <span
+                    className={`text-xs ${secondaryText}`}
+                  >
+                    2 people in this meeting
+                  </span>
+
+                  <button
+                    type="button"
+                    className="text-xs font-medium text-emerald-600"
+                  >
+                    Invite
+                  </button>
+                </div>
+
+                {/* YOU */}
+
+                <div
+                  className={`p-3 rounded-2xl border ${borderColor} ${
+                    isDark
+                      ? "bg-white/[0.025]"
+                      : "bg-slate-50"
+                  } mb-2`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-white flex items-center justify-center text-xs font-bold">
+                        {initials(currentUser?.name)}
+                      </div>
+
+                      <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white dark:border-[#101827]" />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-semibold truncate">
+                          {currentUser?.name || "You"}
+                        </p>
+
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 font-bold">
+                          YOU
+                        </span>
+                      </div>
+
+                      <p
+                        className={`text-[10px] mt-1 ${secondaryText}`}
+                      >
+                        {isAudioMuted
+                          ? "Microphone off"
+                          : "Microphone on"}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {isAudioMuted ? (
+                        <MicOff className="w-4 h-4 text-rose-400" />
+                      ) : (
+                        <Mic className="w-4 h-4 text-emerald-500" />
+                      )}
+
+                      {isVideoMuted ? (
+                        <VideoOff className="w-4 h-4 text-rose-400" />
+                      ) : (
+                        <Video className="w-4 h-4 text-emerald-500" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* HOST */}
+
+                <div
+                  className={`p-3 rounded-2xl border ${borderColor} ${
+                    isDark
+                      ? "bg-white/[0.025]"
+                      : "bg-slate-50"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white flex items-center justify-center text-xs font-bold">
+                      TM
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold truncate">
+                        Prof. Tara Miller
+                      </p>
+
+                      <p
+                        className={`text-[10px] mt-1 ${secondaryText}`}
+                      >
+                        Host · Instructor
+                      </p>
+                    </div>
+
+                    <span className="text-[9px] px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 font-bold">
+                      HOST
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* =================================================
+                AI COPILOT
+                ================================================= */}
+
+            {activeSidePanel === "ai_copilot" && (
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="rounded-2xl bg-gradient-to-br from-violet-500/10 to-emerald-500/10 border border-violet-500/20 p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-violet-500/10 text-violet-500 flex items-center justify-center">
+                      <Sparkles className="w-5 h-5" />
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-bold">
+                        AI Copilot
+                      </p>
+
+                      <p
+                        className={`text-[10px] ${secondaryText}`}
+                      >
+                        Listening to your meeting
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
+
+                    <span className="text-[10px] text-violet-500 font-semibold">
+                      AI is active
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-xs font-bold">
+                      Key discussion points
+                    </h3>
+
+                    <span
+                      className={`text-[9px] ${secondaryText}`}
+                    >
+                      Live
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {[
+                      "Product strategy discussion",
+                      "Team collaboration",
+                      "Project planning",
+                    ].map((item) => (
+                      <div
+                        key={item}
+                        className={`p-3 rounded-xl border ${borderColor} ${
+                          isDark
+                            ? "bg-white/[0.025]"
+                            : "bg-slate-50"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className="w-5 h-5 rounded-md bg-violet-500/10 text-violet-500 flex items-center justify-center text-[9px] font-bold">
+                            ✓
+                          </span>
+
+                          <span className="text-xs">
+                            {item}
+                          </span>
                         </div>
                       </div>
                     ))}
                   </div>
-
-                  <form onSubmit={handleSendChat} className="mt-4 flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Type a message..."
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      className="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs focus:outline-none focus:border-emerald-500"
-                    />
-                    <button
-                      type="submit"
-                      className="p-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-black transition"
-                    >
-                      <Send className="w-4 h-4" />
-                    </button>
-                  </form>
                 </div>
-              )}
 
-              {/* 2. DUAL-CODE EDITOR PANEL */}
-              {activeSidePanel === "dual_editor" && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-slate-200">Language</span>
-                    <select
-                      value={selectedLang}
-                      onChange={(e) => setSelectedLang(e.target.value as SupportedCodeLanguage)}
-                      className="px-2 py-1 rounded bg-slate-900 border border-slate-700 text-slate-300 text-xs"
-                    >
-                      <option value="typescript">TypeScript</option>
-                      <option value="python">Python</option>
-                      <option value="javascript">JavaScript</option>
-                      <option value="cpp">C++</option>
-                      <option value="rust">Rust</option>
-                    </select>
-                  </div>
+                <div>
+                  <h3 className="text-xs font-bold mb-2">
+                    Suggested action items
+                  </h3>
 
-                  {/* Left Pane (Reference) */}
-                  <div className="space-y-1">
-                    <span className="text-[11px] text-slate-400 font-semibold flex items-center gap-1">
-                      <Lock className="w-3 h-3 text-amber-400" /> Left Pane (Instructor Reference)
-                    </span>
-                    <textarea
-                      readOnly
-                      rows={7}
-                      value={leftCode}
-                      className="w-full p-2.5 rounded-lg bg-slate-950 font-mono text-[11px] text-emerald-300 border border-slate-800 resize-none"
-                    />
-                  </div>
-
-                  {/* Right Pane (Working Code) */}
-                  <div className="space-y-1">
-                    <span className="text-[11px] text-slate-400 font-semibold">
-                      Right Pane (Student Scratchpad)
-                    </span>
-                    <textarea
-                      rows={7}
-                      value={rightCode}
-                      onChange={(e) => setRightCode(e.target.value)}
-                      className="w-full p-2.5 rounded-lg bg-slate-950 font-mono text-[11px] text-slate-200 border border-slate-800 focus:border-teal-500 resize-none"
-                    />
-                  </div>
-
-                  <button
-                    onClick={handleRunCode}
-                    className="w-full py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-slate-950 font-bold flex items-center justify-center gap-1.5 transition"
+                  <div
+                    className={`p-4 rounded-xl border ${borderColor} ${
+                      isDark
+                        ? "bg-white/[0.025]"
+                        : "bg-slate-50"
+                    }`}
                   >
-                    <Play className="w-3.5 h-3.5 fill-current" /> Execute Code
-                  </button>
-
-                  {codeOutput && (
-                    <div className="p-2.5 rounded-lg bg-black border border-slate-800 font-mono text-[10px] text-slate-300 whitespace-pre-wrap">
-                      {codeOutput}
-                    </div>
-                  )}
+                    <p
+                      className={`text-xs ${secondaryText}`}
+                    >
+                      Review meeting notes and assign
+                      responsibilities after the session.
+                    </p>
+                  </div>
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* 3. PARTICIPANTS PANEL */}
-              {activeSidePanel === "participants" && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-emerald-500 text-black font-bold flex items-center justify-center text-[10px]">
-                        {currentUser?.name[0]}
-                      </div>
-                      <span className="font-semibold text-slate-200">{currentUser?.name} (You)</span>
+            {/* =================================================
+                PROCTORING
+                ================================================= */}
+
+            {activeSidePanel === "proctoring" && (
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                      <ShieldAlert className="w-5 h-5" />
                     </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400">
-                      {currentUser?.role}
+
+                    <div>
+                      <p className="text-sm font-bold">
+                        Proctoring Monitor
+                      </p>
+
+                      <p
+                        className={`text-[10px] ${secondaryText}`}
+                      >
+                        Authorized monitoring tools
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  className={`p-4 rounded-2xl border ${borderColor}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={`text-xs ${secondaryText}`}
+                    >
+                      Integrity status
                     </span>
-                  </div>
 
-                  <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-teal-500 text-black font-bold flex items-center justify-center text-[10px]">
-                        T
-                      </div>
-                      <span className="font-semibold text-slate-200">Prof. Tara Miller</span>
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+
+                      <span className="text-xs font-bold text-emerald-600">
+                        Active
+                      </span>
                     </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400">
-                      host
+                  </div>
+                </div>
+
+                <div
+                  className={`p-4 rounded-2xl border ${borderColor}`}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-bold">
+                      Session monitoring
                     </span>
-                  </div>
-                </div>
-              )}
 
-              {/* 4. AI COPILOT */}
-              {activeSidePanel === "ai_copilot" && (
-                <div className="space-y-4">
-                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300">
-                    <span className="font-bold block mb-1">Live Meeting Copilot</span>
-                    Real-time synthesis powered by Deepgram STT and Claude 3.5 Sonnet.
+                    <ChevronDown
+                      className={`w-4 h-4 ${secondaryText}`}
+                    />
                   </div>
 
-                  <div className="space-y-2">
-                    <span className="font-bold text-slate-200">Key Discussion Highlights</span>
-                    <ul className="list-disc list-inside space-y-1 text-slate-400">
-                      <li>Binary search algorithm constraints and edge cases</li>
-                      <li>Simulcast layer allocation for low-bandwidth students</li>
-                      <li>Reviewing ghost supervisor audit requirements</li>
-                    </ul>
-                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`text-[11px] ${secondaryText}`}
+                      >
+                        Camera status
+                      </span>
 
-                  <div className="space-y-2">
-                    <span className="font-bold text-slate-200">Action Items</span>
-                    <div className="p-2 rounded bg-slate-900 border border-slate-800 text-slate-300">
-                      &bull; Alex to complete binary search test implementation by end of class.
+                      <span className="text-[11px] text-emerald-600 font-medium">
+                        Connected
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`text-[11px] ${secondaryText}`}
+                      >
+                        Audio status
+                      </span>
+
+                      <span className="text-[11px] text-emerald-600 font-medium">
+                        Connected
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`text-[11px] ${secondaryText}`}
+                      >
+                        Session security
+                      </span>
+
+                      <span className="text-[11px] text-emerald-600 font-medium">
+                        Protected
+                      </span>
                     </div>
                   </div>
                 </div>
-              )}
-
-              {/* 5. PROCTORING MONITOR */}
-              {activeSidePanel === "proctoring" && (
-                <div className="space-y-3">
-                  <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300">
-                    <span className="font-bold block">Assessment Integrity Stream</span>
-                    Active monitoring for tab switches, secondary displays, and focus loss.
-                  </div>
-                  <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 space-y-1">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-emerald-400 font-semibold">Integrity Score</span>
-                      <span className="font-bold text-white">98 / 100</span>
-                    </div>
-                    <p className="text-[10px] text-slate-400">Zero unauthorized clipboard attempts detected.</p>
-                  </div>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </aside>
         )}
-      </div>
+      </main>
 
-      {/* Bottom Meeting Control Bar */}
-      <footer className="h-20 border-t border-slate-800/80 bg-[#0a0e18] px-6 flex items-center justify-between z-20">
-        {/* Left Info */}
-        <div className="hidden sm:flex items-center gap-3 text-xs text-slate-400">
-          <span>{currentUser?.name}</span>
-          <span className="text-slate-600">|</span>
-          <span>{roomCode}</span>
-        </div>
+      {/* =====================================================
+          BOTTOM CONTROL BAR
+          ===================================================== */}
 
-        {/* Core Media Controls */}
-        <div className="flex items-center gap-3 mx-auto">
-          {/* Audio toggle */}
+      <div
+        className={`absolute bottom-5 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-24px)] md:w-auto`}
+      >
+        <div
+          className={`mx-auto rounded-2xl md:rounded-3xl border ${borderColor} ${
+            isDark
+              ? "bg-[#101722]/95"
+              : "bg-white/95"
+          } backdrop-blur-xl shadow-2xl px-3 md:px-4 py-2.5 flex items-center justify-center gap-1.5 md:gap-2`}
+        >
+          {/* MIC */}
+
           <button
+            type="button"
             onClick={toggleAudio}
-            className={`p-3.5 rounded-full transition shadow-lg ${
+            title={
               isAudioMuted
-                ? "bg-rose-600 text-white hover:bg-rose-500"
-                : "bg-slate-800 text-slate-200 hover:bg-slate-700"
+                ? "Turn microphone on"
+                : "Turn microphone off"
+            }
+            className={`w-11 h-11 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center transition ${
+              isAudioMuted
+                ? "bg-rose-500 text-white shadow-lg shadow-rose-500/20"
+                : isDark
+                ? "bg-white/[0.06] text-white hover:bg-white/[0.1]"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
             }`}
-            title={isAudioMuted ? "Unmute Microphone" : "Mute Microphone"}
           >
-            {isAudioMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+            {isAudioMuted ? (
+              <MicOff className="w-4.5 h-4.5" />
+            ) : (
+              <Mic className="w-4.5 h-4.5" />
+            )}
           </button>
 
-          {/* Video toggle */}
+          {/* CAMERA */}
+
           <button
+            type="button"
             onClick={toggleVideo}
-            className={`p-3.5 rounded-full transition shadow-lg ${
+            title={
               isVideoMuted
-                ? "bg-rose-600 text-white hover:bg-rose-500"
-                : "bg-slate-800 text-slate-200 hover:bg-slate-700"
+                ? "Turn camera on"
+                : "Turn camera off"
+            }
+            className={`w-11 h-11 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center transition ${
+              isVideoMuted
+                ? "bg-rose-500 text-white shadow-lg shadow-rose-500/20"
+                : isDark
+                ? "bg-white/[0.06] text-white hover:bg-white/[0.1]"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
             }`}
-            title={isVideoMuted ? "Turn Video On" : "Turn Video Off"}
           >
-            {isVideoMuted ? <VideoOff className="w-5 h-5" /> : <Video className="w-5 h-5" />}
+            {isVideoMuted ? (
+              <VideoOff className="w-4.5 h-4.5" />
+            ) : (
+              <Video className="w-4.5 h-4.5" />
+            )}
           </button>
 
-          {/* Screen Share */}
+          {/* SCREEN SHARE */}
+
           <button
+            type="button"
             onClick={toggleScreenShare}
-            className={`p-3.5 rounded-full transition shadow-lg ${
+            title="Share screen"
+            className={`hidden sm:flex w-11 h-11 md:w-12 md:h-12 rounded-xl md:rounded-2xl items-center justify-center transition ${
               isScreenSharing
-                ? "bg-emerald-600 text-black font-bold"
-                : "bg-slate-800 text-slate-200 hover:bg-slate-700"
+                ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+                : isDark
+                ? "bg-white/[0.06] text-white hover:bg-white/[0.1]"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
             }`}
-            title="Share Screen"
           >
-            <MonitorUp className="w-5 h-5" />
+            <MonitorUp className="w-4.5 h-4.5" />
           </button>
 
-          {/* Hand Raise */}
+          {/* RAISE HAND */}
+
           <button
+            type="button"
             onClick={toggleHandRaise}
-            className={`p-3.5 rounded-full transition shadow-lg ${
+            title="Raise hand"
+            className={`hidden sm:flex w-11 h-11 md:w-12 md:h-12 rounded-xl md:rounded-2xl items-center justify-center transition ${
               isHandRaised
-                ? "bg-amber-500 text-black font-bold"
-                : "bg-slate-800 text-slate-200 hover:bg-slate-700"
+                ? "bg-amber-400 text-black shadow-lg shadow-amber-400/20"
+                : isDark
+                ? "bg-white/[0.06] text-white hover:bg-white/[0.1]"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
             }`}
-            title="Raise Hand"
           >
-            <Hand className="w-5 h-5" />
+            <Hand className="w-4.5 h-4.5" />
           </button>
 
-          {/* Feature Trigger: Dual Code Editor */}
-          <button
-            onClick={() => setSidePanel(activeSidePanel === "dual_editor" ? "none" : "dual_editor")}
-            className={`p-3.5 rounded-full transition shadow-lg ${
-              activeSidePanel === "dual_editor"
-                ? "bg-teal-500 text-black font-bold"
-                : "bg-slate-800 text-slate-200 hover:bg-slate-700"
+          <div
+            className={`hidden md:block w-px h-8 mx-1 ${
+              isDark
+                ? "bg-white/10"
+                : "bg-slate-200"
             }`}
-            title="Dual-Code Editor"
-          >
-            <Code2 className="w-5 h-5" />
-          </button>
+          />
 
-          {/* End Call / Leave */}
+          {/* LEAVE */}
+
           <button
+            type="button"
             onClick={handleLeaveMeeting}
-            className="px-5 py-3 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-bold flex items-center gap-2 shadow-lg shadow-rose-600/30 transition ml-2"
-            title="Leave Meeting"
+            title="Leave meeting"
+            className="h-11 md:h-12 px-4 md:px-5 rounded-xl md:rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs flex items-center gap-2 transition shadow-lg shadow-rose-500/20"
           >
-            <PhoneOff className="w-5 h-5" />
-            <span className="text-xs hidden md:inline">Leave</span>
-          </button>
-        </div>
+            <PhoneOff className="w-4 h-4" />
 
-        {/* Right Drawer Toggles */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setSidePanel(activeSidePanel === "chat" ? "none" : "chat")}
-            className={`p-2.5 rounded-lg text-slate-300 hover:bg-slate-800 transition ${
-              activeSidePanel === "chat" ? "bg-slate-800 text-emerald-400" : ""
+            <span className="hidden sm:inline">
+              Leave
+            </span>
+          </button>
+
+          <div
+            className={`hidden md:block w-px h-8 mx-1 ${
+              isDark
+                ? "bg-white/10"
+                : "bg-slate-200"
             }`}
+          />
+
+          {/* CHAT */}
+
+          <button
+            type="button"
+            onClick={() =>
+              setSidePanel(
+                activeSidePanel === "chat"
+                  ? "none"
+                  : "chat"
+              )
+            }
             title="Chat"
+            className={`w-11 h-11 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center transition ${
+              activeSidePanel === "chat"
+                ? "bg-emerald-500/10 text-emerald-600"
+                : isDark
+                ? "text-slate-300 hover:bg-white/[0.06]"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
           >
-            <MessageSquare className="w-5 h-5" />
+            <MessageSquare className="w-4.5 h-4.5" />
           </button>
 
+          {/* PARTICIPANTS */}
+
           <button
-            onClick={() => setSidePanel(activeSidePanel === "participants" ? "none" : "participants")}
-            className={`p-2.5 rounded-lg text-slate-300 hover:bg-slate-800 transition ${
-              activeSidePanel === "participants" ? "bg-slate-800 text-indigo-400" : ""
-            }`}
+            type="button"
+            onClick={() =>
+              setSidePanel(
+                activeSidePanel === "participants"
+                  ? "none"
+                  : "participants"
+              )
+            }
             title="Participants"
+            className={`w-11 h-11 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center transition ${
+              activeSidePanel === "participants"
+                ? "bg-emerald-500/10 text-emerald-600"
+                : isDark
+                ? "text-slate-300 hover:bg-white/[0.06]"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
           >
-            <Users className="w-5 h-5" />
+            <Users className="w-4.5 h-4.5" />
           </button>
 
+          {/* AI */}
+
           <button
-            onClick={() => setSidePanel(activeSidePanel === "ai_copilot" ? "none" : "ai_copilot")}
-            className={`p-2.5 rounded-lg text-slate-300 hover:bg-slate-800 transition ${
-              activeSidePanel === "ai_copilot" ? "bg-slate-800 text-rose-400" : ""
-            }`}
+            type="button"
+            onClick={() =>
+              setSidePanel(
+                activeSidePanel === "ai_copilot"
+                  ? "none"
+                  : "ai_copilot"
+              )
+            }
             title="AI Copilot"
+            className={`hidden sm:flex w-11 h-11 md:w-12 md:h-12 rounded-xl md:rounded-2xl items-center justify-center transition ${
+              activeSidePanel === "ai_copilot"
+                ? "bg-violet-500/10 text-violet-600"
+                : isDark
+                ? "text-slate-300 hover:bg-white/[0.06]"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
           >
-            <Sparkles className="w-5 h-5" />
+            <Sparkles className="w-4.5 h-4.5" />
           </button>
 
+          {/* PROCTORING */}
+
           <button
-            onClick={() => setSidePanel(activeSidePanel === "proctoring" ? "none" : "proctoring")}
-            className={`p-2.5 rounded-lg text-slate-300 hover:bg-slate-800 transition ${
-              activeSidePanel === "proctoring" ? "bg-slate-800 text-amber-400" : ""
-            }`}
+            type="button"
+            onClick={() =>
+              setSidePanel(
+                activeSidePanel === "proctoring"
+                  ? "none"
+                  : "proctoring"
+              )
+            }
             title="Proctoring"
+            className={`hidden lg:flex w-11 h-11 md:w-12 md:h-12 rounded-xl md:rounded-2xl items-center justify-center transition ${
+              activeSidePanel === "proctoring"
+                ? "bg-amber-500/10 text-amber-600"
+                : isDark
+                ? "text-slate-300 hover:bg-white/[0.06]"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
           >
-            <ShieldAlert className="w-5 h-5" />
+            <ShieldAlert className="w-4.5 h-4.5" />
           </button>
         </div>
-      </footer>
+      </div>
     </div>
   );
 }
