@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Mic,
   MicOff,
@@ -44,6 +44,23 @@ export default function RoomPage({
   const roomCode = resolvedParams.code.toUpperCase();
 
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const rawMode = searchParams.get("mode");
+
+  const mode =
+    rawMode === "business" ||
+    rawMode === "coding" ||
+    rawMode === "general"
+      ? rawMode
+      : "general";
+
+  const meetingTitle =
+    mode === "business"
+      ? "Business Meeting"
+      : mode === "coding"
+        ? "Coding Bootcamp"
+        : "General Meeting";
 
   const {
     meeting,
@@ -437,7 +454,13 @@ export default function RoomPage({
 
     reset();
 
-    router.push("/dashboard/business");
+    router.push(
+      mode === "business"
+        ? "/dashboard/business"
+        : mode === "coding"
+          ? "/dashboard/coding"
+          : "/dashboard"
+    );
   }
 
   /*
@@ -529,49 +552,6 @@ export default function RoomPage({
             }`}
           />
 
-          {/* MEETING */}
-
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-sm truncate max-w-[180px] md:max-w-[300px]">
-                {meeting?.title || "Business Meeting"}
-              </span>
-
-              <span className="hidden md:inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                Business
-              </span>
-            </div>
-
-            <div
-              className={`flex items-center gap-2 text-[10px] ${secondaryText} mt-0.5`}
-            >
-              <span className="font-mono">
-                {roomCode}
-              </span>
-
-              <button
-                type="button"
-                onClick={copyMeetingLink}
-                className="hover:text-emerald-500 transition"
-                title="Copy meeting link"
-              >
-                {copied ? (
-                  <Check className="w-3 h-3 text-emerald-500" />
-                ) : (
-                  <Copy className="w-3 h-3" />
-                )}
-              </button>
-
-              <span className="opacity-40">•</span>
-
-              <Clock3 className="w-3 h-3" />
-
-              <span className="font-mono">
-                {formatMeetingTime(meetingSeconds)}
-              </span>
-            </div>
-          </div>
         </div>
 
         {/* RIGHT */}
